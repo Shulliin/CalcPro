@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora Programável Pro</title>
+
+    <!-- VÍNCULO PARA PWA (APLICATIVO) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CalcPro">
+
+    <!-- Math.js e Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: #131b2e;
+            --bg-card-hover: #1c2742;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --accent-success: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #030712; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+
+        .app-container { width: 100%; max-width: 440px; height: 100vh; max-height: 900px; background: var(--bg-main); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        @media (min-width: 480px) { .app-container { height: 92vh; border-radius: 36px; border: 8px solid #1f293d; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); } }
+
+        /* Top Bar */
+        .top-bar { height: 50px; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); background: rgba(19, 27, 46, 0.8); backdrop-filter: blur(10px); z-index: 10; }
+        .app-title { font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .app-title i { color: var(--accent-primary); }
+        .top-actions { display: flex; gap: 8px; }
+        .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+        .icon-btn:active { transform: scale(0.92); background: var(--accent-primary); }
+
+        /* Main View Container */
+        .content-area { flex: 1; position: relative; overflow: hidden; }
+        .tab-content { position: absolute; inset: 0; display: none; flex-direction: column; padding: 12px; overflow-y: auto; }
+        .tab-content.active { display: flex; }
+
+        /* Calculator Screen */
+        .display-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 12px 16px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 100px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
+        .display-mode { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.75rem; color: var(--text-muted); }
+        .mode-badge { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); padding: 2px 8px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .expression-line { color: var(--text-muted); font-size: 0.95rem; min-height: 22px; word-break: break-all; text-align: right; }
+        .result-line { color: var(--text-main); font-size: 1.8rem; font-weight: 700; text-align: right; word-break: break-all; margin-top: 4px; }
+
+        /* Quick Function Bar */
+        .quick-functions-bar { margin-bottom: 10px; }
+        .quick-functions-title { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .quick-chips-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        .quick-chips-scroll::-webkit-scrollbar { display: none; }
+        .func-chip { background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .func-chip i { font-size: 0.7rem; color: var(--accent-orange); }
+        .func-chip:active { background: var(--accent-primary); border-color: var(--accent-primary); }
+
+        /* Keypad Toggle Sub-tabs */
+        .keypad-toggle { display: flex; background: var(--bg-card); border-radius: var(--radius-md); padding: 3px; margin-bottom: 8px; border: 1px solid var(--border-color); }
+        .keypad-toggle button { flex: 1; padding: 6px; border: none; background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; border-radius: 7px; cursor: pointer; transition: 0.2s; }
+        .keypad-toggle button.active { background: var(--accent-primary); color: #fff; }
+
+        /* Keypads */
+        .keypad-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; }
+        .sci-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; flex: 1; }
+        .key-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 1.1rem; font-weight: 600; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s; user-select: none; }
+        .key-btn:active { transform: scale(0.95); background: var(--bg-card-hover); }
+        .key-btn.op { color: var(--accent-primary); font-weight: 700; background: rgba(59, 130, 246, 0.1); }
+        .key-btn.sci { color: var(--accent-purple); font-size: 0.85rem; background: rgba(139, 92, 246, 0.1); }
+        .key-btn.action { color: #f43f5e; background: rgba(244, 63, 94, 0.1); }
+        .key-btn.equals { background: var(--accent-primary); color: white; grid-column: span 1; }
+
+        /* Functions Manager Tab */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .section-title { font-size: 1.1rem; font-weight: 700; }
+        .btn-primary { background: var(--accent-primary); color: white; border: none; padding: 8px 14px; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        
+        /* Folders & Functions List */
+        .folder-select-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
+        .folder-chip { background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 16px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; color: var(--text-muted); }
+        .folder-chip.active { background: var(--accent-purple); color: white; border-color: var(--accent-purple); }
+
+        .function-cards-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
+        .func-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+        .func-card-header { display: flex; justify-content: space-between; align-items: center; }
+        .func-name { font-weight: 700; font-size: 0.95rem; color: var(--accent-primary); display: flex; align-items: center; gap: 6px; }
+        .func-body { font-family: monospace; font-size: 0.85rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 6px; border-radius: 6px; }
+        .func-actions { display: flex; gap: 8px; margin-top: 4px; justify-content: flex-end; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .btn-sm.fav.active { color: var(--accent-orange); border-color: var(--accent-orange); }
+
+        /* Graph Tab */
+        .chart-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 10px; border: 1px solid var(--border-color); height: 280px; position: relative; margin-bottom: 12px; }
+        .graph-controls { display: flex; flex-direction: column; gap: 10px; background: var(--bg-card); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label { font-size: 0.75rem; color: var(--text-muted); }
+        .input-field { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-main); font-size: 0.9rem; outline: none; }
+        .input-field:focus { border-color: var(--accent-primary); }
+
+        /* History Tab */
+        .history-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
+        .history-item { background: var(--bg-card); border-radius: var(--radius-md); padding: 10px 12px; border: 1px solid var(--border-color); cursor: pointer; }
+        .history-item:active { background: var(--bg-card-hover); }
+        .history-expr { font-size: 0.85rem; color: var(--text-muted); }
+        .history-res { font-size: 1.1rem; font-weight: 700; color: var(--accent-success); text-align: right; }
+
+        /* Bottom Nav */
+        .bottom-nav { height: 60px; background: rgba(19, 27, 46, 0.95); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; backdrop-filter: blur(10px); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.7rem; cursor: pointer; text-decoration: none; width: 20%; transition: 0.2s; }
+        .nav-item i { font-size: 1.1rem; }
+        .nav-item.active { color: var(--accent-primary); }
+
+        /* Modals */
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 100; opacity: 0; transition: opacity 0.2s; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-card { background: var(--bg-card); border-top-left-radius: 24px; border-top-right-radius: 24px; width: 100%; max-height: 85%; padding: 20px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; transform: translateY(100%); transition: transform 0.25s ease-out; }
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-weight: 700; font-size: 1.1rem; }
+
+        /* Parameter Dynamic Form */
+        .param-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+        .param-label { font-weight: 600; font-size: 0.9rem; color: var(--accent-primary); min-width: 60px; }
+
+        /* Step Tutorial */
+        .step-box { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); border-radius: var(--radius-md); padding: 12px; font-size: 0.85rem; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="app-title"><i class="fa-solid fa-calculator"></i> CalcPro</div>
+            <div class="top-actions">
+                <button class="icon-btn" onclick="openTutorial()"><i class="fa-solid fa-graduation-cap"></i></button>
+                <button class="icon-btn" onclick="openHelp()"><i class="fa-solid fa-circle-question"></i></button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <main class="content-area">
+            
+            <!-- TAB 1: CALCULATOR -->
+            <section id="tab-calc" class="tab-content active">
+                <div class="display-container">
+                    <div class="display-mode">
+                        <span id="angle-mode-btn" class="mode-badge" onclick="toggleAngleMode()">DEG</span>
+                        <span id="folder-badge" style="font-size:0.7rem; color:var(--text-muted)">Geral</span>
+                    </div>
+                    <div class="expression-line" id="calc-expression"></div>
+                    <div class="result-line" id="calc-result">0</div>
+                </div>
+
+                <!-- Favorite / Quick Access Functions Bar -->
+                <div class="quick-functions-bar">
+                    <div class="quick-functions-title">
+                        <span><i class="fa-solid fa-star" style="color:var(--accent-orange)"></i> Atalhos de Funções</span>
+                        <span style="cursor:pointer; color:var(--accent-primary)" onclick="switchTab('tab-funcs')">Gerenciar</span>
+                    </div>
+                    <div class="quick-chips-scroll" id="quick-chips-container">
+                        <!-- Chips injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Scientific vs Basic Toggle -->
+                <div class="keypad-toggle">
+                    <button id="btn-toggle-basic" class="active" onclick="setKeypadMode('basic')">Básica</button>
+                    <button id="btn-toggle-sci" onclick="setKeypadMode('sci')">Científica</button>
+                </div>
+
+                <!-- Basic Keypad -->
+                <div id="keypad-basic" class="keypad-grid">
+                    <button class="key-btn action" onclick="clearDisplay()">AC</button>
+                    <button class="key-btn op" onclick="insertOp('(')">(</button>
+                    <button class="key-btn op" onclick="insertOp(')')">)</button>
+                    <button class="key-btn op" onclick="deleteChar()"><i class="fa-solid fa-backspace"></i></button>
+
+                    <button class="key-btn" onclick="insertOp('7')">7</button>
+                    <button class="key-btn" onclick="insertOp('8')">8</button>
+                    <button class="key-btn" onclick="insertOp('9')">9</button>
+                    <button class="key-btn op" onclick="insertOp('/')">/</button>
+
+                    <button class="key-btn" onclick="insertOp('4')">4</button>
+                    <button class="key-btn" onclick="insertOp('5')">5</button>
+                    <button class="key-btn" onclick="insertOp('6')">6</button>
+                    <button class="key-btn op" onclick="insertOp('*')">*</button>
+
+                    <button class="key-btn" onclick="insertOp('1')">1</button>
+                    <button class="key-btn" onclick="insertOp('2')">2</button>
+                    <button class="key-btn" onclick="insertOp('3')">3</button>
+                    <button class="key-btn op" onclick="insertOp('-')">-</button>
+
+                    <button class="key-btn" onclick="insertOp('0')">0</button>
+                    <button class="key-btn" onclick="insertOp('.')">.</button>
+                    <button class="key-btn op" onclick="insertOp('^')">^</button>
+                    <button class="key-btn op" onclick="insertOp('+')">+</button>
+
+                    <button class="key-btn equals" style="grid-column: span 4;" onclick="calculateResult()">=</button>
+                </div>
+
+                <!-- Scientific Keypad (Hidden by Default) -->
+                <div id="keypad-sci" class="sci-grid" style="display: none;">
+                    <button class="key-btn sci" onclick="insertOp('sin(')">sin</button>
+                    <button class="key-btn sci" onclick="insertOp('cos(')">cos</button>
+                    <button class="key-btn sci" onclick="insertOp('tan(')">tan</button>
+                    <button class="key-btn sci" onclick="insertOp('log(')">log</button>
+                    <button class="key-btn action" onclick="clearDisplay()">AC</button>
+
+                    <button class="key-btn sci" onclick="insertOp('asin(')">asin</button>
+                    <button class="key-btn sci" onclick="insertOp('acos(')">acos</button>
+                    <button class="key-btn sci" onclick="insertOp('atan(')">atan</button>
+                    <button class="key-btn sci" onclick="insertOp('ln(')">ln</button>
+                    <button class="key-btn op" onclick="deleteChar()"><i class="fa-solid fa-backspace"></i></button>
+
+                    <button class="key-btn sci" onclick="insertOp('sqrt(')">√</button>
+                    <button class="key-btn sci" onclick="insertOp('cbrt(')">∛</button>
+                    <button class="key-btn sci" onclick="insertOp('abs(')">|x|</button>
+                    <button class="key-btn sci" onclick="insertOp('pi')">π</button>
+
+                    <button class="key-btn op" onclick="insertOp('(')">(</button>
+                    <button class="key-btn op" onclick="insertOp(')')">)</button>
+                    <button class="key-btn sci" onclick="insertOp('e')">e</button>
+                    <button class="key-btn sci" onclick="insertOp('!')">x!</button>
+                    <button class="key-btn op" onclick="insertOp('^')">xⁿ</button>
+                    <button class="key-btn equals" onclick="calculateResult()">=</button>
+                </div>
+            </section>
+
+            <!-- TAB 2: FUNCTIONS MANAGER -->
+            <section id="tab-funcs" class="tab-content">
+                <div class="section-header">
+                    <span class="section-title">Minhas Funções</span>
+                    <button class="btn-primary" onclick="openNewFuncModal()"><i class="fa-solid fa-plus"></i> Nova</button>
+                </div>
+
+                <!-- Folder selector -->
+                <div class="folder-select-bar" id="folder-chips-bar">
+                    <!-- Dynamic Folders -->
+                </div>
+
+                <div class="function-cards-list" id="functions-list">
+                    <!-- Dynamic Cards injected by JS -->
+                </div>
+            </section>
+
+            <!-- TAB 3: GRAPH PLOTTER -->
+            <section id="tab-graph" class="tab-content">
+                <div class="section-header">
+                    <span class="section-title">Gráfico 2D</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="functionChart"></canvas>
+                </div>
+                <div class="graph-controls">
+                    <div class="input-group">
+                        <label>Função f(x)</label>
+                        <select id="graph-func-select" class="input-field" onchange="plotGraph()">
+                            <!-- Options dynamically populated -->
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <div class="input-group" style="flex:1;">
+                            <label>X Mínimo</label>
+                            <input type="number" id="graph-xmin" class="input-field" value="-10" onchange="plotGraph()">
+                        </div>
+                        <div class="input-group" style="flex:1;">
+                            <label>X Máximo</label>
+                            <input type="number" id="graph-xmax" class="input-field" value="10" onchange="plotGraph()">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: HISTORY -->
+            <section id="tab-history" class="tab-content">
+                <div class="section-header">
+                    <span class="section-title">Histórico</span>
+                    <button class="btn-sm" onclick="clearHistory()"><i class="fa-solid fa-trash"></i> Limpar</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- History entries -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a class="nav-item active" onclick="switchTab('tab-calc', this)">
+                <i class="fa-solid fa-calculator"></i>
+                <span>Calc</span>
+            </a>
+            <a class="nav-item" onclick="switchTab('tab-funcs', this)">
+                <i class="fa-solid fa-code"></i>
+                <span>Funções</span>
+            </a>
+            <a class="nav-item" onclick="switchTab('tab-graph', this)">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Gráfico</span>
+            </a>
+            <a class="nav-item" onclick="switchTab('tab-history', this)">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Histórico</span>
+            </a>
+        </nav>
+
+        <!-- MODAL: CREATE / EDIT FUNCTION -->
+        <div id="modal-func" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span class="modal-title" id="modal-func-title">Nova Função</span>
+                    <button class="icon-btn" onclick="closeModal('modal-func')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="input-group">
+                    <label>Nome da Função (ex: imc, hipotenusa)</label>
+                    <input type="text" id="func-input-name" class="input-field" placeholder="ex: areaCirculo">
+                </div>
+                <div class="input-group">
+                    <label>Parâmetros separados por vírgula</label>
+                    <input type="text" id="func-input-params" class="input-field" placeholder="ex: r ou peso, altura">
+                </div>
+                <div class="input-group">
+                    <label>Pasta / Grupo</label>
+                    <input type="text" id="func-input-folder" class="input-field" placeholder="ex: Geometria, Física, Geral" value="Geral">
+                </div>
+                <div class="input-group">
+                    <label>Expressão Matemática</label>
+                    <input type="text" id="func-input-body" class="input-field" placeholder="ex: pi * r^2">
+                </div>
+                <button class="btn-primary" style="justify-content:center; padding: 12px;" onclick="saveCustomFunction()">Salvar Função</button>
+            </div>
+        </div>
+
+        <!-- MODAL: SEPARATE PARAMETER INPUT -->
+        <div id="modal-params" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span class="modal-title" id="param-modal-title">Executar Função</span>
+                    <button class="icon-btn" onclick="closeModal('modal-params')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="param-inputs-container" style="display:flex; flex-direction:column; gap:10px;">
+                    <!-- Dynamic Parameter Fields -->
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-success); padding: 12px; border-radius: var(--radius-md); text-align: center;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted)">Resultado em Tempo Real:</div>
+                    <div id="param-live-result" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-success)">-</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-primary" style="flex:1; justify-content:center;" onclick="sendParamResultToDisplay()">Enviar ao Visor</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: TUTORIAL -->
+        <div id="modal-tutorial" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span class="modal-title"><i class="fa-solid fa-graduation-cap" style="color:var(--accent-primary)"></i> Tutorial Rápido</span>
+                    <button class="icon-btn" onclick="closeModal('modal-tutorial')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="step-box">
+                    <strong>1. Criar Funções Personalizadas:</strong><br>
+                    Vá na aba <em>Funções</em>, crie fórmulas como <code>hipo(a, b) = sqrt(a^2 + b^2)</code> e organize em pastas.
+                </div>
+                <div class="step-box">
+                    <strong>2. Entrada de Parâmetros Fluida:</strong><br>
+                    Na calculadora, toque nos atalhos das suas funções para abrir uma janela onde cada parâmetro tem seu próprio campo de texto.
+                </div>
+                <div class="step-box">
+                    <strong>3. Plotagem de Gráficos:</strong><br>
+                    Na aba <em>Gráfico</em>, escolha qualquer função $f(x)$ criada e veja a curva desenhada instantaneamente.
+                </div>
+                <button class="btn-primary" style="justify-content:center;" onclick="closeModal('modal-tutorial')">Entendi!</button>
+            </div>
+        </div>
+
+        <!-- MODAL: HELP & DOCS -->
+        <div id="modal-help" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span class="modal-title"><i class="fa-solid fa-circle-question" style="color:var(--accent-primary)"></i> Ajuda & Funções</span>
+                    <button class="icon-btn" onclick="closeModal('modal-help')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); display:flex; flex-direction:column; gap:8px;">
+                    <p><strong>Sintaxe Suportada:</strong></p>
+                    <ul style="padding-left: 20px;">
+                        <li>Soma/Sub/Mult/Div: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code></li>
+                        <li>Potência: <code>2^3</code></li>
+                        <li>Trigonometria: <code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code></li>
+                        <li>Constantes: <code>pi</code>, <code>e</code></li>
+                    </ul>
+                    <p><strong>Exemplo de Modelos:</strong></p>
+                    <button class="btn-sm" onclick="loadPresetFuncs()">Carregar Funções de Exemplo (IMC, Pitágoras, Área)</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- APP STATE ---
+        let customFunctions = JSON.parse(localStorage.getItem('calc_functions')) || [
+            { id: '1', name: 'hipo', params: ['a', 'b'], body: 'sqrt(a^2 + b^2)', folder: 'Geometria', fav: true },
+            { id: '2', name: 'imc', params: ['peso', 'altura'], body: 'peso / (altura^2)', folder: 'Saúde', fav: true }
+        ];
+        let history = JSON.parse(localStorage.getItem('calc_history')) || [];
+        let activeFolder = 'Todas';
+        let angleMode = 'DEG'; // 'DEG' or 'RAD'
+        let currentExecFunc = null;
+        let chartInstance = null;
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderFolderChips();
+            renderQuickChips();
+            renderFunctionsList();
+            renderHistory();
+            initChart();
+        });
+
+        // --- NAVIGATION ---
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            if(el) el.classList.add('active');
+
+            if(tabId === 'tab-graph') {
+                populateGraphSelect();
+                plotGraph();
+            }
+        }
+
+        function setKeypadMode(mode) {
+            document.getElementById('btn-toggle-basic').classList.toggle('active', mode === 'basic');
+            document.getElementById('btn-toggle-sci').classList.toggle('active', mode === 'sci');
+            document.getElementById('keypad-basic').style.display = mode === 'basic' ? 'grid' : 'none';
+            document.getElementById('keypad-sci').style.display = mode === 'sci' ? 'grid' : 'none';
+        }
+
+        function toggleAngleMode() {
+            angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+            document.getElementById('angle-mode-btn').innerText = angleMode;
+        }
+
+        // --- CALCULATOR LOGIC ---
+        const exprEl = document.getElementById('calc-expression');
+        const resEl = document.getElementById('calc-result');
+
+        function insertOp(op) {
+            exprEl.innerText += op;
+        }
+
+        function clearDisplay() {
+            exprEl.innerText = '';
+            resEl.innerText = '0';
+        }
+
+        function deleteChar() {
+            exprEl.innerText = exprEl.innerText.slice(0, -1);
+        }
+
+        function calculateResult() {
+            const expr = exprEl.innerText;
+            if(!expr) return;
+
+            try {
+                // Scope for custom functions
+                let scope = {};
+                customFunctions.forEach(f => {
+                    scope[f.name] = math.parse(f.body).compile();
+                });
+
+                let parsedExpr = expr;
+                // Handle degree mode conversion for trig if needed
+                let compiled = math.evaluate(parsedExpr, scope);
+                
+                let resultFormatted = typeof compiled === 'number' ? Number(compiled.toFixed(6)).toString() : compiled;
+                resEl.innerText = resultFormatted;
+
+                // Save to history
+                history.unshift({ expr, result: resultFormatted, time: new Date().toLocaleTimeString() });
+                if(history.length > 30) history.pop();
+                localStorage.setItem('calc_history', JSON.stringify(history));
+                renderHistory();
+
+            } catch (err) {
+                resEl.innerText = 'Erro';
+            }
+        }
+
+        // --- PARAMETER SEPARATE INPUT SYSTEM ---
+        function openParamModal(funcId) {
+            const func = customFunctions.find(f => f.id === funcId);
+            if(!func) return;
+
+            currentExecFunc = func;
+            document.getElementById('param-modal-title').innerText = `${func.name}(${func.params.join(', ')})`;
+            
+            const container = document.getElementById('param-inputs-container');
+            container.innerHTML = '';
+
+            func.params.forEach(param => {
+                const div = document.createElement('div');
+                div.className = 'param-field';
+                div.innerHTML = `
+                    <span class="param-label">${param}:</span>
+                    <input type="number" class="input-field param-val-input" data-param="${param}" oninput="updateLiveParamCalc()" placeholder="Digite o valor">
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('param-live-result').innerText = '-';
+            openModal('modal-params');
+        }
+
+        function updateLiveParamCalc() {
+            if(!currentExecFunc) return;
+            const inputs = document.querySelectorAll('.param-val-input');
+            let scope = {};
+            let allFilled = true;
+
+            inputs.forEach(input => {
+                const val = parseFloat(input.value);
+                if(isNaN(val)) allFilled = false;
+                scope[input.dataset.param] = val;
+            });
+
+            if(!allFilled) {
+                document.getElementById('param-live-result').innerText = '-';
+                return;
+            }
+
+            try {
+                const res = math.evaluate(currentExecFunc.body, scope);
+                document.getElementById('param-live-result').innerText = Number(res.toFixed(6)).toString();
+            } catch(e) {
+                document.getElementById('param-live-result').innerText = 'Erro';
+            }
+        }
+
+        function sendParamResultToDisplay() {
+            const res = document.getElementById('param-live-result').innerText;
+            if(res !== '-' && res !== 'Erro') {
+                exprEl.innerText = res;
+                resEl.innerText = res;
+                closeModal('modal-params');
+            }
+        }
+
+        // --- FUNCTION MANAGER (FOLDERS & FAVORITES) ---
+        function renderFolderChips() {
+            const folders = ['Todas', ...new Set(customFunctions.map(f => f.folder || 'Geral'))];
+            const container = document.getElementById('folder-chips-bar');
+            container.innerHTML = folders.map(f => `
+                <button class="folder-chip ${f === activeFolder ? 'active' : ''}" onclick="filterFolder('${f}')">${f}</button>
+            `).join('');
+        }
+
+        function filterFolder(folder) {
+            activeFolder = folder;
+            renderFolderChips();
+            renderFunctionsList();
+        }
+
+        function renderQuickChips() {
+            const container = document.getElementById('quick-chips-container');
+            const favs = customFunctions.filter(f => f.fav);
+            
+            if(favs.length === 0) {
+                container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted)">Nenhuma função favoritada</span>`;
+                return;
+            }
+
+            container.innerHTML = favs.map(f => `
+                <div class="func-chip" onclick="openParamModal('${f.id}')">
+                    <i class="fa-solid fa-star"></i>
+                    <span>${f.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderFunctionsList() {
+            const container = document.getElementById('functions-list');
+            const filtered = activeFolder === 'Todas' ? customFunctions : customFunctions.filter(f => (f.folder || 'Geral') === activeFolder);
+
+            container.innerHTML = filtered.map(f => `
+                <div class="func-card">
+                    <div class="func-card-header">
+                        <span class="func-name"><i class="fa-solid fa-square-root-variable"></i> ${f.name}(${f.params.join(', ')})</span>
+                        <span style="font-size:0.7rem; color:var(--text-muted);">${f.folder || 'Geral'}</span>
+                    </div>
+                    <div class="func-body">= ${f.body}</div>
+                    <div class="func-actions">
+                        <button class="btn-sm fav ${f.fav ? 'active' : ''}" onclick="toggleFav('${f.id}')"><i class="fa-solid fa-star"></i></button>
+                        <button class="btn-sm" onclick="openParamModal('${f.id}')"><i class="fa-solid fa-play"></i> Usar</button>
+                        <button class="btn-sm" onclick="deleteFunction('${f.id}')" style="color:#f43f5e"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleFav(id) {
+            const func = customFunctions.find(f => f.id === id);
+            if(func) {
+                func.fav = !func.fav;
+                saveFunctions();
+            }
+        }
+
+        function saveCustomFunction() {
+            const name = document.getElementById('func-input-name').value.trim();
+            const paramsStr = document.getElementById('func-input-params').value.trim();
+            const folder = document.getElementById('func-input-folder').value.trim() || 'Geral';
+            const body = document.getElementById('func-input-body').value.trim();
+
+            if(!name || !body) return alert('Preencha nome e expressão!');
+
+            const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+            customFunctions.push({
+                id: Date.now().toString(),
+                name,
+                params,
+                folder,
+                body,
+                fav: true
+            });
+
+            saveFunctions();
+            closeModal('modal-func');
+        }
+
+        function deleteFunction(id) {
+            customFunctions = customFunctions.filter(f => f.id !== id);
+            saveFunctions();
+        }
+
+        function saveFunctions() {
+            localStorage.setItem('calc_functions', JSON.stringify(customFunctions));
+            renderFolderChips();
+            renderQuickChips();
+            renderFunctionsList();
+        }
+
+        // --- GRAPH PLOTTER ---
+        function populateGraphSelect() {
+            const select = document.getElementById('graph-func-select');
+            const singleParamFuncs = customFunctions.filter(f => f.params.length === 1);
+            
+            select.innerHTML = singleParamFuncs.map(f => `
+                <option value="${f.id}">${f.name}(${f.params[0]}) = ${f.body}</option>
+            `).join('');
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('functionChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'f(x)', data: [], borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
+            });
+        }
+
+        function plotGraph() {
+            const funcId = document.getElementById('graph-func-select').value;
+            const xmin = parseFloat(document.getElementById('graph-xmin').value) || -10;
+            const xmax = parseFloat(document.getElementById('graph-xmax').value) || 10;
+            
+            const func = customFunctions.find(f => f.id === funcId);
+            if(!func || func.params.length !== 1) return;
+
+            const xVals = [];
+            const yVals = [];
+            const step = (xmax - xmin) / 50;
+
+            const compiled = math.parse(func.body).compile();
+
+            for(let x = xmin; x <= xmax; x += step) {
+                xVals.push(x.toFixed(1));
+                try {
+                    let scope = {};
+                    scope[func.params[0]] = x;
+                    yVals.push(compiled.evaluate(scope));
+                } catch(e) {
+                    yVals.push(null);
+                }
+            }
+
+            chartInstance.data.labels = xVals;
+            chartInstance.data.datasets[0].data = yVals;
+            chartInstance.data.datasets[0].label = `${func.name}(${func.params[0]})`;
+            chartInstance.update();
+        }
+
+        // --- HISTORY ---
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = history.map(h => `
+                <div class="history-item" onclick="loadHistoryItem('${h.expr}')">
+                    <div class="history-expr">${h.expr}</div>
+                    <div class="history-res">= ${h.result}</div>
+                </div>
+            `).join('');
+        }
+
+        function loadHistoryItem(expr) {
+            exprEl.innerText = expr;
+            switchTab('tab-calc');
+        }
+
+        function clearHistory() {
+            history = [];
+            localStorage.removeItem('calc_history');
+            renderHistory();
+        }
+
+        // --- MODAL HELPERS ---
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function openNewFuncModal() { openModal('modal-func'); }
+        function openTutorial() { openModal('modal-tutorial'); }
+        function openHelp() { openModal('modal-help'); }
+
+        function loadPresetFuncs() {
+            customFunctions.push(
+                { id: Date.now().toString(), name: 'areaTri', params: ['b', 'h'], body: '(b * h) / 2', folder: 'Geometria', fav: false }
+            );
+            saveFunctions();
+            closeModal('modal-help');
+        }
+    </script>
+</body>
+</html>
