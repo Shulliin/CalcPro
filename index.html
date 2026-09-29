@@ -17,6 +17,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
+    <!-- SDKs do Firebase (Versão Compatível) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             --bg-main: #090d16;
@@ -44,9 +49,11 @@
         .top-bar { height: 50px; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); background: rgba(19, 27, 46, 0.8); backdrop-filter: blur(10px); z-index: 10; }
         .app-title { font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
         .app-title i { color: var(--accent-primary); }
-        .top-actions { display: flex; gap: 8px; }
+        .top-actions { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
         .icon-btn:active { transform: scale(0.92); background: var(--accent-primary); }
+        .user-status-btn { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .user-status-btn.logged { border-color: var(--accent-success); color: var(--accent-success); }
 
         /* Main View Container */
         .content-area { flex: 1; position: relative; overflow: hidden; }
@@ -155,6 +162,9 @@
         <header class="top-bar">
             <div class="app-title"><i class="fa-solid fa-calculator"></i> CalcPro</div>
             <div class="top-actions">
+                <button class="user-status-btn" id="user-status-btn" onclick="openAuthModal()">
+                    <i class="fa-solid fa-cloud"></i> <span id="user-btn-text">Entrar</span>
+                </button>
                 <button class="icon-btn" onclick="openTutorial()"><i class="fa-solid fa-graduation-cap"></i></button>
                 <button class="icon-btn" onclick="openHelp()"><i class="fa-solid fa-circle-question"></i></button>
             </div>
@@ -327,6 +337,47 @@
             </a>
         </nav>
 
+        <!-- MODAL: FIREBASE AUTH & SYNC -->
+        <div id="modal-auth" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span class="modal-title"><i class="fa-solid fa-cloud-arrow-up" style="color:var(--accent-primary)"></i> Sincronização na Nuvem</span>
+                    <button class="icon-btn" onclick="closeModal('modal-auth')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div id="auth-logged-out-view" style="display:flex; flex-direction:column; gap:10px;">
+                    <p style="font-size:0.85rem; color:var(--text-muted)">Crie uma conta para salvar suas funções na nuvem e acessá-las de qualquer dispositivo.</p>
+                    
+                    <div class="input-group">
+                        <label>E-mail</label>
+                        <input type="email" id="auth-email" class="input-field" placeholder="seuemail@exemplo.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="auth-password" class="input-field" placeholder="******">
+                    </div>
+
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-primary" style="flex:1; justify-content:center;" onclick="handleLogin()">Entrar</button>
+                        <button class="btn-sm" style="flex:1; justify-content:center; padding:10px;" onclick="handleRegister()">Cadastrar</button>
+                    </div>
+
+                    <div style="text-align:center; margin: 4px 0; font-size:0.8rem; color:var(--text-muted)">ou</div>
+
+                    <button class="btn-sm" style="justify-content:center; padding:10px; background:white; color:#111; font-weight:600;" onclick="handleGoogleLogin()">
+                        <i class="fa-brands fa-google"></i> Entrar com Google
+                    </button>
+                </div>
+
+                <div id="auth-logged-in-view" style="display:none; flex-direction:column; gap:12px; text-align:center;">
+                    <p style="font-size:0.9rem; color:var(--accent-success);"><i class="fa-solid fa-circle-check"></i> Você está conectado!</p>
+                    <p id="user-email-display" style="font-size:0.85rem; color:var(--text-main); font-weight:600;"></p>
+                    <button class="btn-primary" style="justify-content:center;" onclick="syncDataWithCloud()"><i class="fa-solid fa-rotate"></i> Sincronizar Agora</button>
+                    <button class="btn-sm" style="justify-content:center; color:#f43f5e;" onclick="handleLogout()">Sair da Conta</button>
+                </div>
+            </div>
+        </div>
+
         <!-- MODAL: CREATE / EDIT FUNCTION -->
         <div id="modal-func" class="modal-overlay">
             <div class="modal-card">
@@ -404,12 +455,12 @@
                     <button class="icon-btn" onclick="closeModal('modal-tutorial')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="step-box">
-                    <strong>1. Rótulos e Pastas Organizadoras:</strong><br>
-                    Crie rótulos claros para seus parâmetros (ex: <em>Altura em metros</em>) e escolha em qual pasta salvar sua função.
+                    <strong>1. Sincronização em Nuvem:</strong><br>
+                    Clique no botão do topo para criar uma conta ou entrar. Todas as suas funções e histórico ficam salvos no banco de dados.
                 </div>
                 <div class="step-box">
-                    <strong>2. Pré-visualização ao Vivo:</strong><br>
-                    Ao digitar contas na calculadora, o resultado previsto aparece suavemente abaixo do visor antes de pressionar <code>=</code>.
+                    <strong>2. Rótulos e Pastas Organizadoras:</strong><br>
+                    Crie rótulos claros para seus parâmetros (ex: <em>Altura em metros</em>) e escolha em qual pasta salvar sua função.
                 </div>
                 <div class="step-box">
                     <strong>3. Memória de Entradas:</strong><br>
@@ -443,6 +494,48 @@
     </div>
 
     <script>
+        // --- CONFIGURAÇÃO DO FIREBASE ---
+        // substitua os valores abaixo pelas chaves do seu console do firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBK3Wj1a85EMoViSlv7KjgzqCeYQqCsAY8",
+            authDomain: "shullin-scalcpro.firebaseapp.com",
+            projectId: "shullin-scalcpro",
+            storageBucket: "shullin-scalcpro.firebasestorage.app",
+            messagingSenderId: "868173755560",
+            appId: "1:868173755560:web:755dfa2bbc7792cd727e9d"
+        };
+
+        // Inicializar Firebase
+        let auth, db, currentUser = null;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+
+            // Monitorar estado de autenticação
+            auth.onAuthStateChanged(user => {
+                currentUser = user;
+                const statusBtn = document.getElementById('user-status-btn');
+                const btnText = document.getElementById('user-btn-text');
+
+                if (user) {
+                    statusBtn.classList.add('logged');
+                    btnText.innerText = user.email ? user.email.split('@')[0] : "Conectado";
+                    document.getElementById('auth-logged-out-view').style.display = 'none';
+                    document.getElementById('auth-logged-in-view').style.display = 'flex';
+                    document.getElementById('user-email-display').innerText = user.email;
+                    loadUserDataFromCloud();
+                } else {
+                    statusBtn.classList.remove('logged');
+                    btnText.innerText = "Entrar";
+                    document.getElementById('auth-logged-out-view').style.display = 'flex';
+                    document.getElementById('auth-logged-in-view').style.display = 'none';
+                }
+            });
+        } catch(e) {
+            console.log("Firebase não configurado ou chaves pendentes.");
+        }
+
         // --- SERVICE WORKER REGISTRATION (OFFLINE SUPPORT) ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
@@ -469,6 +562,70 @@
             renderHistory();
             initChart();
         });
+
+        // --- AUTHENTICATION & CLOUD SYNC LOGIC ---
+        function openAuthModal() { openModal('modal-auth'); }
+
+        function handleLogin() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            if(!email || !pass) return alert('Preencha e-mail e senha!');
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => closeModal('modal-auth'))
+                .catch(err => alert('Erro no login: ' + err.message));
+        }
+
+        function handleRegister() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            if(!email || !pass) return alert('Preencha e-mail e senha!');
+
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then(() => {
+                    alert('Conta criada com sucesso!');
+                    syncDataWithCloud();
+                    closeModal('modal-auth');
+                })
+                .catch(err => alert('Erro no cadastro: ' + err.message));
+        }
+
+        function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(() => closeModal('modal-auth'))
+                .catch(err => alert('Erro ao entrar com Google: ' + err.message));
+        }
+
+        function handleLogout() {
+            auth.signOut().then(() => closeModal('modal-auth'));
+        }
+
+        function syncDataWithCloud() {
+            if(!currentUser) return;
+            db.collection('users').doc(currentUser.uid).set({
+                customFunctions: customFunctions,
+                history: history,
+                updatedAt: new Date()
+            }).then(() => alert('Dados sincronizados com a nuvem com sucesso!'))
+              .catch(err => alert('Erro ao sincronizar: ' + err.message));
+        }
+
+        function loadUserDataFromCloud() {
+            if(!currentUser) return;
+            db.collection('users').doc(currentUser.uid).get().then(doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    if(data.customFunctions) customFunctions = data.customFunctions;
+                    if(data.history) history = data.history;
+                    saveFunctionsLocally();
+                    renderFolderChips();
+                    renderQuickChips();
+                    renderFunctionsList();
+                    renderHistory();
+                }
+            });
+        }
 
         // --- NAVIGATION ---
         function switchTab(tabId, el) {
@@ -541,9 +698,7 @@
                     resEl.classList.add('preview');
                     resEl.classList.remove('error-text');
                 }
-            } catch (err) {
-                // Durante a digitação, se estiver incompleto, mantém o resultado anterior silenciosamente
-            }
+            } catch (err) {}
         }
 
         function calculateResult() {
@@ -567,6 +722,7 @@
                 if(history.length > 30) history.pop();
                 localStorage.setItem('calc_history', JSON.stringify(history));
                 renderHistory();
+                if(currentUser) syncDataWithCloud();
 
             } catch (err) {
                 resEl.classList.add('error-text');
@@ -633,7 +789,6 @@
                 return;
             }
 
-            // Salvar entradas no histórico da função
             currentExecFunc.lastInputs = scope;
             saveFunctions();
 
@@ -846,11 +1001,16 @@
             saveFunctions();
         }
 
-        function saveFunctions() {
+        function saveFunctionsLocally() {
             localStorage.setItem('calc_functions', JSON.stringify(customFunctions));
+        }
+
+        function saveFunctions() {
+            saveFunctionsLocally();
             renderFolderChips();
             renderQuickChips();
             renderFunctionsList();
+            if(currentUser) syncDataWithCloud();
         }
 
         // --- GRAPH PLOTTER ---
@@ -924,6 +1084,7 @@
             history = [];
             localStorage.removeItem('calc_history');
             renderHistory();
+            if(currentUser) syncDataWithCloud();
         }
 
         // --- MODAL HELPERS ---
