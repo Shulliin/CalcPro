@@ -54,12 +54,13 @@
         .tab-content.active { display: flex; }
 
         /* Calculator Screen */
-        .display-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 12px 16px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 100px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
+        .display-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 12px 16px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 105px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
         .display-mode { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.75rem; color: var(--text-muted); }
         .mode-badge { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); padding: 2px 8px; border-radius: 12px; font-weight: 600; cursor: pointer; }
         .expression-line { color: var(--text-muted); font-size: 0.95rem; min-height: 22px; word-break: break-all; text-align: right; }
-        .result-line { color: var(--text-main); font-size: 1.8rem; font-weight: 700; text-align: right; word-break: break-all; margin-top: 4px; transition: color 0.2s; }
-        .result-line.error-text { color: #f43f5e; font-size: 0.95rem; font-weight: 500; font-family: monospace; }
+        .result-line { color: var(--text-main); font-size: 1.8rem; font-weight: 700; text-align: right; word-break: break-all; margin-top: 2px; transition: all 0.2s; }
+        .result-line.preview { opacity: 0.45; font-size: 1.4rem; }
+        .result-line.error-text { color: #f43f5e; font-size: 0.85rem; font-weight: 500; font-family: monospace; opacity: 1; }
 
         /* Quick Function Bar */
         .quick-functions-bar { margin-bottom: 10px; }
@@ -138,8 +139,10 @@
         .modal-title { font-weight: 700; font-size: 1.1rem; }
 
         /* Parameter Dynamic Form */
-        .param-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
-        .param-label { font-weight: 600; font-size: 0.9rem; color: var(--accent-primary); min-width: 60px; }
+        .param-field { display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.2); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+        .param-label-box { display: flex; justify-content: space-between; align-items: center; }
+        .param-label { font-weight: 600; font-size: 0.85rem; color: var(--accent-primary); }
+        .param-custom-name { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
 
         /* Step Tutorial */
         .step-box { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); border-radius: var(--radius-md); padding: 12px; font-size: 0.85rem; line-height: 1.4; }
@@ -168,7 +171,7 @@
                         <span id="folder-badge" style="font-size:0.7rem; color:var(--text-muted)">Geral</span>
                     </div>
                     <div class="expression-line" id="calc-expression"></div>
-                    <div class="result-line" id="calc-result">0</div>
+                    <div class="result-line preview" id="calc-result">0</div>
                 </div>
 
                 <!-- Favorite / Quick Access Functions Bar -->
@@ -213,7 +216,6 @@
                     <button class="key-btn" onclick="insertOp('0')">0</button>
                     <button class="key-btn" onclick="insertOp('.')">.</button>
                     <button class="key-btn op" onclick="insertOp('^')">^</button>
-
                     <button class="key-btn op" onclick="insertOp('+')">+</button>
 
                     <button class="key-btn equals" style="grid-column: span 4;" onclick="calculateResult()">=</button>
@@ -333,24 +335,36 @@
                     <button class="icon-btn" onclick="closeModal('modal-func')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <input type="hidden" id="func-editing-id" value="">
+                
                 <div class="input-group">
                     <label>Nome da Função (ex: imc, hipotenusa)</label>
                     <input type="text" id="func-input-name" class="input-field" placeholder="ex: areaCirculo">
                 </div>
+
                 <div class="input-group">
-                    <label>Parâmetros separados por vírgula</label>
-                    <input type="text" id="func-input-params" class="input-field" placeholder="ex: r ou peso, altura" oninput="updateParamInjectChips()">
-                    <!-- Botões dinâmicos de inserção rápida -->
+                    <label>Parâmetros da fórmula (separados por vírgula)</label>
+                    <input type="text" id="func-input-params" class="input-field" placeholder="ex: peso, altura" oninput="updateParamInjectChips()">
                     <div id="param-chips-container" class="param-chips-bar"></div>
                 </div>
+
+                <div class="input-group">
+                    <label>Nomes para exibição (rótulos visíveis ao usar)</label>
+                    <input type="text" id="func-input-labels" class="input-field" placeholder="ex: Peso (kg), Altura (m)">
+                </div>
+
                 <div class="input-group">
                     <label>Pasta / Grupo</label>
-                    <input type="text" id="func-input-folder" class="input-field" placeholder="ex: Geometria, Física, Geral" value="Geral">
+                    <select id="func-select-folder" class="input-field" onchange="toggleFolderNewInput(this)">
+                        <!-- Populated by JS -->
+                    </select>
+                    <input type="text" id="func-input-new-folder" class="input-field" placeholder="Digite o nome da nova pasta" style="display:none; margin-top:6px;">
                 </div>
+
                 <div class="input-group">
                     <label>Expressão Matemática</label>
-                    <input type="text" id="func-input-body" class="input-field" placeholder="ex: pi * r^2">
+                    <input type="text" id="func-input-body" class="input-field" placeholder="ex: peso / (altura^2)">
                 </div>
+
                 <button class="btn-primary" style="justify-content:center; padding: 12px;" onclick="saveCustomFunction()">Salvar Função</button>
             </div>
         </div>
@@ -362,13 +376,20 @@
                     <span class="modal-title" id="param-modal-title">Executar Função</span>
                     <button class="icon-btn" onclick="closeModal('modal-params')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <button class="btn-sm" onclick="clearParamInputs()"><i class="fa-solid fa-broom"></i> Limpar Campos</button>
+                </div>
+
                 <div id="param-inputs-container" style="display:flex; flex-direction:column; gap:10px;">
                     <!-- Dynamic Parameter Fields -->
                 </div>
+
                 <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-success); padding: 12px; border-radius: var(--radius-md); text-align: center;">
                     <div style="font-size: 0.75rem; color: var(--text-muted)">Resultado em Tempo Real:</div>
                     <div id="param-live-result" style="font-size: 1.3rem; font-weight: 700; color: var(--accent-success); word-break: break-all;">-</div>
                 </div>
+
                 <div style="display:flex; gap:10px;">
                     <button class="btn-primary" style="flex:1; justify-content:center;" onclick="sendParamResultToDisplay()">Enviar ao Visor</button>
                 </div>
@@ -383,16 +404,16 @@
                     <button class="icon-btn" onclick="closeModal('modal-tutorial')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="step-box">
-                    <strong>1. Criar & Inserir Parâmetros:</strong><br>
-                    Crie fórmulas e clique nos botões dos parâmetros criados para inseri-los direto na caixa da expressão.
+                    <strong>1. Rótulos e Pastas Organizadoras:</strong><br>
+                    Crie rótulos claros para seus parâmetros (ex: <em>Altura em metros</em>) e escolha em qual pasta salvar sua função.
                 </div>
                 <div class="step-box">
-                    <strong>2. Detecção Transparente de Erros:</strong><br>
-                    Caso digite algo inválido, o motivo exato do erro será exibido diretamente na tela do visor.
+                    <strong>2. Pré-visualização ao Vivo:</strong><br>
+                    Ao digitar contas na calculadora, o resultado previsto aparece suavemente abaixo do visor antes de pressionar <code>=</code>.
                 </div>
                 <div class="step-box">
-                    <strong>3. Plotagem de Gráficos:</strong><br>
-                    Escolha qualquer função de 1 variável e veja a curva desenhada instantaneamente.
+                    <strong>3. Memória de Entradas:</strong><br>
+                    Suas últimas entradas em cada função ficam salvas automaticamente para reutilizações rápidas!
                 </div>
                 <button class="btn-primary" style="justify-content:center;" onclick="closeModal('modal-tutorial')">Entendi!</button>
             </div>
@@ -414,7 +435,7 @@
                         <li>Constantes: <code>pi</code>, <code>e</code></li>
                     </ul>
                     <p><strong>Exemplo de Modelos:</strong></p>
-                    <button class="btn-sm" onclick="loadPresetFuncs()">Carregar Funções de Exemplo (IMC, Pitágoras, Área)</button>
+                    <button class="btn-sm" onclick="loadPresetFuncs()">Carregar Funções de Exemplo (IMC, Pitágoras)</button>
                 </div>
             </div>
         </div>
@@ -431,8 +452,8 @@
 
         // --- APP STATE ---
         let customFunctions = JSON.parse(localStorage.getItem('calc_functions')) || [
-            { id: '1', name: 'hipo', params: ['a', 'b'], body: 'sqrt(a^2 + b^2)', folder: 'Geometria', fav: true },
-            { id: '2', name: 'imc', params: ['peso', 'altura'], body: 'peso / (altura^2)', folder: 'Saúde', fav: true }
+            { id: '1', name: 'hipo', params: ['a', 'b'], labels: ['Cateto A', 'Cateto B'], body: 'sqrt(a^2 + b^2)', folder: 'Geometria', fav: true, lastInputs: {} },
+            { id: '2', name: 'imc', params: ['peso', 'altura'], labels: ['Peso (kg)', 'Altura (m)'], body: 'peso / (altura^2)', folder: 'Saúde', fav: true, lastInputs: {} }
         ];
         let history = JSON.parse(localStorage.getItem('calc_history')) || [];
         let activeFolder = 'Todas';
@@ -473,26 +494,56 @@
         function toggleAngleMode() {
             angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
             document.getElementById('angle-mode-btn').innerText = angleMode;
+            updateLivePreview();
         }
 
-        // --- CALCULATOR LOGIC & DETAILED ERROR HANDLING ---
+        // --- CALCULATOR LOGIC WITH LIVE PREVIEW & ERROR REPORTING ---
         const exprEl = document.getElementById('calc-expression');
         const resEl = document.getElementById('calc-result');
 
         function insertOp(op) {
             resEl.classList.remove('error-text');
             exprEl.innerText += op;
+            updateLivePreview();
         }
 
         function clearDisplay() {
             exprEl.innerText = '';
             resEl.innerText = '0';
+            resEl.classList.add('preview');
             resEl.classList.remove('error-text');
         }
 
         function deleteChar() {
             resEl.classList.remove('error-text');
             exprEl.innerText = exprEl.innerText.slice(0, -1);
+            updateLivePreview();
+        }
+
+        function updateLivePreview() {
+            const expr = exprEl.innerText;
+            if(!expr) {
+                resEl.innerText = '0';
+                resEl.classList.add('preview');
+                return;
+            }
+
+            try {
+                let scope = {};
+                customFunctions.forEach(f => {
+                    scope[f.name] = math.parse(f.body).compile();
+                });
+
+                let compiled = math.evaluate(expr, scope);
+                if(compiled !== undefined && typeof compiled !== 'function') {
+                    let resultFormatted = typeof compiled === 'number' ? Number(compiled.toFixed(6)).toString() : compiled;
+                    resEl.innerText = resultFormatted;
+                    resEl.classList.add('preview');
+                    resEl.classList.remove('error-text');
+                }
+            } catch (err) {
+                // Durante a digitação, se estiver incompleto, mantém o resultado anterior silenciosamente
+            }
         }
 
         function calculateResult() {
@@ -509,6 +560,7 @@
                 let resultFormatted = typeof compiled === 'number' ? Number(compiled.toFixed(6)).toString() : compiled;
                 
                 resEl.innerText = resultFormatted;
+                resEl.classList.remove('preview');
                 resEl.classList.remove('error-text');
 
                 history.unshift({ expr, result: resultFormatted, time: new Date().toLocaleTimeString() });
@@ -517,13 +569,13 @@
                 renderHistory();
 
             } catch (err) {
-                // Exibe a mensagem de erro explicativa
                 resEl.classList.add('error-text');
+                resEl.classList.remove('preview');
                 resEl.innerText = `Erro: ${err.message || 'Expressão Inválida'}`;
             }
         }
 
-        // --- PARAMETER SEPARATE INPUT SYSTEM ---
+        // --- PARAMETER SEPARATE INPUT SYSTEM WITH MEMORY ---
         function openParamModal(funcId) {
             const func = customFunctions.find(f => f.id === funcId);
             if(!func) return;
@@ -534,18 +586,31 @@
             const container = document.getElementById('param-inputs-container');
             container.innerHTML = '';
 
-            func.params.forEach(param => {
+            const lastInputs = func.lastInputs || {};
+
+            func.params.forEach((param, index) => {
+                const labelText = (func.labels && func.labels[index]) ? func.labels[index] : param;
+                const savedVal = lastInputs[param] !== undefined ? lastInputs[param] : '';
+
                 const div = document.createElement('div');
                 div.className = 'param-field';
                 div.innerHTML = `
-                    <span class="param-label">${param}:</span>
-                    <input type="number" class="input-field param-val-input" data-param="${param}" oninput="updateLiveParamCalc()" placeholder="Digite o valor">
+                    <div class="param-label-box">
+                        <span class="param-label">${param}</span>
+                        <span class="param-custom-name">${labelText}</span>
+                    </div>
+                    <input type="number" class="input-field param-val-input" data-param="${param}" value="${savedVal}" oninput="updateLiveParamCalc()" placeholder="Digite o valor de ${labelText}">
                 `;
                 container.appendChild(div);
             });
 
-            document.getElementById('param-live-result').innerText = '-';
+            updateLiveParamCalc();
             openModal('modal-params');
+        }
+
+        function clearParamInputs() {
+            document.querySelectorAll('.param-val-input').forEach(input => input.value = '');
+            updateLiveParamCalc();
         }
 
         function updateLiveParamCalc() {
@@ -556,14 +621,21 @@
 
             inputs.forEach(input => {
                 const val = parseFloat(input.value);
-                if(isNaN(val)) allFilled = false;
-                scope[input.dataset.param] = val;
+                if(isNaN(val)) {
+                    allFilled = false;
+                } else {
+                    scope[input.dataset.param] = val;
+                }
             });
 
             if(!allFilled) {
                 document.getElementById('param-live-result').innerText = '-';
                 return;
             }
+
+            // Salvar entradas no histórico da função
+            currentExecFunc.lastInputs = scope;
+            saveFunctions();
 
             try {
                 const res = math.evaluate(currentExecFunc.body, scope);
@@ -578,6 +650,7 @@
             if(res !== '-' && !res.startsWith('Erro')) {
                 exprEl.innerText = res;
                 resEl.innerText = res;
+                resEl.classList.remove('preview');
                 resEl.classList.remove('error-text');
                 closeModal('modal-params');
             }
@@ -605,7 +678,37 @@
             bodyInput.focus();
         }
 
-        // --- FUNCTION MANAGER (FOLDERS, FAVORITES & EDIT) ---
+        // --- FOLDER SELECTOR LOGIC ---
+        function populateFolderSelect(selectedFolder = 'Geral') {
+            const select = document.getElementById('func-select-folder');
+            const folders = [...new Set(customFunctions.map(f => f.folder || 'Geral'))];
+            
+            if(!folders.includes('Geral')) folders.unshift('Geral');
+
+            select.innerHTML = folders.map(f => `<option value="${f}">${f}</option>`).join('') +
+                               `<option value="__NEW__">+ Criar Nova Pasta...</option>`;
+            
+            if(folders.includes(selectedFolder)) {
+                select.value = selectedFolder;
+                document.getElementById('func-input-new-folder').style.display = 'none';
+            } else {
+                select.value = '__NEW__';
+                document.getElementById('func-input-new-folder').style.display = 'block';
+                document.getElementById('func-input-new-folder').value = selectedFolder;
+            }
+        }
+
+        function toggleFolderNewInput(selectEl) {
+            const newFolderInput = document.getElementById('func-input-new-folder');
+            if(selectEl.value === '__NEW__') {
+                newFolderInput.style.display = 'block';
+                newFolderInput.focus();
+            } else {
+                newFolderInput.style.display = 'none';
+            }
+        }
+
+        // --- FUNCTION MANAGER ---
         function renderFolderChips() {
             const folders = ['Todas', ...new Set(customFunctions.map(f => f.folder || 'Geral'))];
             const container = document.getElementById('folder-chips-bar');
@@ -671,8 +774,9 @@
             document.getElementById('func-editing-id').value = "";
             document.getElementById('func-input-name').value = "";
             document.getElementById('func-input-params').value = "";
-            document.getElementById('func-input-folder').value = "Geral";
+            document.getElementById('func-input-labels').value = "";
             document.getElementById('func-input-body').value = "";
+            populateFolderSelect('Geral');
             updateParamInjectChips();
             openModal('modal-func');
         }
@@ -685,9 +789,10 @@
             document.getElementById('func-editing-id').value = func.id;
             document.getElementById('func-input-name').value = func.name;
             document.getElementById('func-input-params').value = func.params.join(', ');
-            document.getElementById('func-input-folder').value = func.folder || 'Geral';
+            document.getElementById('func-input-labels').value = (func.labels || []).join(', ');
             document.getElementById('func-input-body').value = func.body;
 
+            populateFolderSelect(func.folder || 'Geral');
             updateParamInjectChips();
             openModal('modal-func');
         }
@@ -696,18 +801,26 @@
             const editingId = document.getElementById('func-editing-id').value;
             const name = document.getElementById('func-input-name').value.trim();
             const paramsStr = document.getElementById('func-input-params').value.trim();
-            const folder = document.getElementById('func-input-folder').value.trim() || 'Geral';
+            const labelsStr = document.getElementById('func-input-labels').value.trim();
+            
+            let folderSelect = document.getElementById('func-select-folder').value;
+            let folder = folderSelect === '__NEW__' 
+                ? document.getElementById('func-input-new-folder').value.trim() || 'Geral' 
+                : folderSelect;
+
             const body = document.getElementById('func-input-body').value.trim();
 
-            if(!name || !body) return alert('Preencha nome e expressão!');
+            if(!name || !body) return alert('Preencha o nome e a expressão!');
 
             const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+            const labels = labelsStr ? labelsStr.split(',').map(l => l.trim()) : params;
 
             if(editingId) {
                 const index = customFunctions.findIndex(f => f.id === editingId);
                 if(index !== -1) {
                     customFunctions[index].name = name;
                     customFunctions[index].params = params;
+                    customFunctions[index].labels = labels;
                     customFunctions[index].folder = folder;
                     customFunctions[index].body = body;
                 }
@@ -716,9 +829,11 @@
                     id: Date.now().toString(),
                     name,
                     params,
+                    labels,
                     folder,
                     body,
-                    fav: true
+                    fav: true,
+                    lastInputs: {}
                 });
             }
 
@@ -801,6 +916,7 @@
 
         function loadHistoryItem(expr) {
             exprEl.innerText = expr;
+            updateLivePreview();
             switchTab('tab-calc');
         }
 
@@ -818,7 +934,7 @@
 
         function loadPresetFuncs() {
             customFunctions.push(
-                { id: Date.now().toString(), name: 'areaTri', params: ['b', 'h'], body: '(b * h) / 2', folder: 'Geometria', fav: false }
+                { id: Date.now().toString(), name: 'areaTri', params: ['b', 'h'], labels: ['Base', 'Altura'], body: '(b * h) / 2', folder: 'Geometria', fav: false, lastInputs: {} }
             );
             saveFunctions();
             closeModal('modal-help');
