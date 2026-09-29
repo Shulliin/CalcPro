@@ -58,7 +58,8 @@
         .display-mode { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.75rem; color: var(--text-muted); }
         .mode-badge { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); padding: 2px 8px; border-radius: 12px; font-weight: 600; cursor: pointer; }
         .expression-line { color: var(--text-muted); font-size: 0.95rem; min-height: 22px; word-break: break-all; text-align: right; }
-        .result-line { color: var(--text-main); font-size: 1.8rem; font-weight: 700; text-align: right; word-break: break-all; margin-top: 4px; }
+        .result-line { color: var(--text-main); font-size: 1.8rem; font-weight: 700; text-align: right; word-break: break-all; margin-top: 4px; transition: color 0.2s; }
+        .result-line.error-text { color: #f43f5e; font-size: 0.95rem; font-weight: 500; font-family: monospace; }
 
         /* Quick Function Bar */
         .quick-functions-bar { margin-bottom: 10px; }
@@ -103,6 +104,10 @@
         .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .btn-sm.fav.active { color: var(--accent-orange); border-color: var(--accent-orange); }
 
+        /* Parameter Quick Inject Chips */
+        .param-chips-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .param-chip-btn { background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent-primary); color: var(--accent-primary); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+
         /* Graph Tab */
         .chart-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 10px; border: 1px solid var(--border-color); height: 280px; position: relative; margin-bottom: 12px; }
         .graph-controls { display: flex; flex-direction: column; gap: 10px; background: var(--bg-card); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
@@ -119,7 +124,7 @@
         .history-res { font-size: 1.1rem; font-weight: 700; color: var(--accent-success); text-align: right; }
 
         /* Bottom Nav */
-        .bottom-nav { height: 60px; background: rgba(19, 27, 46, 0.95); border-top: 1px solid var(--border-color); display: flex; justify-space-around; align-items: center; backdrop-filter: blur(10px); }
+        .bottom-nav { height: 60px; background: rgba(19, 27, 46, 0.95); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; backdrop-filter: blur(10px); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.7rem; cursor: pointer; text-decoration: none; width: 20%; transition: 0.2s; }
         .nav-item i { font-size: 1.1rem; }
         .nav-item.active { color: var(--accent-primary); }
@@ -208,6 +213,7 @@
                     <button class="key-btn" onclick="insertOp('0')">0</button>
                     <button class="key-btn" onclick="insertOp('.')">.</button>
                     <button class="key-btn op" onclick="insertOp('^')">^</button>
+
                     <button class="key-btn op" onclick="insertOp('+')">+</button>
 
                     <button class="key-btn equals" style="grid-column: span 4;" onclick="calculateResult()">=</button>
@@ -333,7 +339,9 @@
                 </div>
                 <div class="input-group">
                     <label>Parâmetros separados por vírgula</label>
-                    <input type="text" id="func-input-params" class="input-field" placeholder="ex: r ou peso, altura">
+                    <input type="text" id="func-input-params" class="input-field" placeholder="ex: r ou peso, altura" oninput="updateParamInjectChips()">
+                    <!-- Botões dinâmicos de inserção rápida -->
+                    <div id="param-chips-container" class="param-chips-bar"></div>
                 </div>
                 <div class="input-group">
                     <label>Pasta / Grupo</label>
@@ -359,7 +367,7 @@
                 </div>
                 <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-success); padding: 12px; border-radius: var(--radius-md); text-align: center;">
                     <div style="font-size: 0.75rem; color: var(--text-muted)">Resultado em Tempo Real:</div>
-                    <div id="param-live-result" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-success)">-</div>
+                    <div id="param-live-result" style="font-size: 1.3rem; font-weight: 700; color: var(--accent-success); word-break: break-all;">-</div>
                 </div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn-primary" style="flex:1; justify-content:center;" onclick="sendParamResultToDisplay()">Enviar ao Visor</button>
@@ -375,16 +383,16 @@
                     <button class="icon-btn" onclick="closeModal('modal-tutorial')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="step-box">
-                    <strong>1. Criar & Editar Funções:</strong><br>
-                    Vá na aba <em>Funções</em>, crie fórmulas como <code>hipo(a, b) = sqrt(a^2 + b^2)</code>, edite clicando no botão de lápis e organize por pastas.
+                    <strong>1. Criar & Inserir Parâmetros:</strong><br>
+                    Crie fórmulas e clique nos botões dos parâmetros criados para inseri-los direto na caixa da expressão.
                 </div>
                 <div class="step-box">
-                    <strong>2. Entrada de Parâmetros Fluida:</strong><br>
-                    Na calculadora, toque nos atalhos das suas funções para abrir uma janela onde cada parâmetro tem seu próprio campo de texto.
+                    <strong>2. Detecção Transparente de Erros:</strong><br>
+                    Caso digite algo inválido, o motivo exato do erro será exibido diretamente na tela do visor.
                 </div>
                 <div class="step-box">
                     <strong>3. Plotagem de Gráficos:</strong><br>
-                    Na aba <em>Gráfico</em>, escolha qualquer função $f(x)$ criada e veja a curva desenhada instantaneamente.
+                    Escolha qualquer função de 1 variável e veja a curva desenhada instantaneamente.
                 </div>
                 <button class="btn-primary" style="justify-content:center;" onclick="closeModal('modal-tutorial')">Entendi!</button>
             </div>
@@ -467,20 +475,23 @@
             document.getElementById('angle-mode-btn').innerText = angleMode;
         }
 
-        // --- CALCULATOR LOGIC ---
+        // --- CALCULATOR LOGIC & DETAILED ERROR HANDLING ---
         const exprEl = document.getElementById('calc-expression');
         const resEl = document.getElementById('calc-result');
 
         function insertOp(op) {
+            resEl.classList.remove('error-text');
             exprEl.innerText += op;
         }
 
         function clearDisplay() {
             exprEl.innerText = '';
             resEl.innerText = '0';
+            resEl.classList.remove('error-text');
         }
 
         function deleteChar() {
+            resEl.classList.remove('error-text');
             exprEl.innerText = exprEl.innerText.slice(0, -1);
         }
 
@@ -496,7 +507,9 @@
 
                 let compiled = math.evaluate(expr, scope);
                 let resultFormatted = typeof compiled === 'number' ? Number(compiled.toFixed(6)).toString() : compiled;
+                
                 resEl.innerText = resultFormatted;
+                resEl.classList.remove('error-text');
 
                 history.unshift({ expr, result: resultFormatted, time: new Date().toLocaleTimeString() });
                 if(history.length > 30) history.pop();
@@ -504,7 +517,9 @@
                 renderHistory();
 
             } catch (err) {
-                resEl.innerText = 'Erro';
+                // Exibe a mensagem de erro explicativa
+                resEl.classList.add('error-text');
+                resEl.innerText = `Erro: ${err.message || 'Expressão Inválida'}`;
             }
         }
 
@@ -554,17 +569,40 @@
                 const res = math.evaluate(currentExecFunc.body, scope);
                 document.getElementById('param-live-result').innerText = Number(res.toFixed(6)).toString();
             } catch(e) {
-                document.getElementById('param-live-result').innerText = 'Erro';
+                document.getElementById('param-live-result').innerText = `Erro: ${e.message}`;
             }
         }
 
         function sendParamResultToDisplay() {
             const res = document.getElementById('param-live-result').innerText;
-            if(res !== '-' && res !== 'Erro') {
+            if(res !== '-' && !res.startsWith('Erro')) {
                 exprEl.innerText = res;
                 resEl.innerText = res;
+                resEl.classList.remove('error-text');
                 closeModal('modal-params');
             }
+        }
+
+        // --- FUNCTION CREATOR PARAMETER INJECTION CHIPS ---
+        function updateParamInjectChips() {
+            const paramsStr = document.getElementById('func-input-params').value.trim();
+            const container = document.getElementById('param-chips-container');
+            
+            if(!paramsStr) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const params = paramsStr.split(',').map(p => p.trim()).filter(p => p !== '');
+            container.innerHTML = params.map(p => `
+                <button type="button" class="param-chip-btn" onclick="injectParamToBody('${p}')">+ Inserir '${p}'</button>
+            `).join('');
+        }
+
+        function injectParamToBody(param) {
+            const bodyInput = document.getElementById('func-input-body');
+            bodyInput.value += param;
+            bodyInput.focus();
         }
 
         // --- FUNCTION MANAGER (FOLDERS, FAVORITES & EDIT) ---
@@ -635,6 +673,7 @@
             document.getElementById('func-input-params').value = "";
             document.getElementById('func-input-folder').value = "Geral";
             document.getElementById('func-input-body').value = "";
+            updateParamInjectChips();
             openModal('modal-func');
         }
 
@@ -649,6 +688,7 @@
             document.getElementById('func-input-folder').value = func.folder || 'Geral';
             document.getElementById('func-input-body').value = func.body;
 
+            updateParamInjectChips();
             openModal('modal-func');
         }
 
@@ -664,7 +704,6 @@
             const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
 
             if(editingId) {
-                // Editar existente
                 const index = customFunctions.findIndex(f => f.id === editingId);
                 if(index !== -1) {
                     customFunctions[index].name = name;
@@ -673,7 +712,6 @@
                     customFunctions[index].body = body;
                 }
             } else {
-                // Criar nova
                 customFunctions.push({
                     id: Date.now().toString(),
                     name,
