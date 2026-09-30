@@ -3,1103 +3,1953 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculadora Programável Pro</title>
-
-    <!-- VÍNCULO PARA PWA (APLICATIVO) -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#090d16">
+    <title>MotoRent PRO - Sistema de Locação de Motos</title>
+    
+    <!-- PWA / Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CalcPro">
+    <meta name="apple-mobile-web-app-title" content="MotoRent PRO">
+    <meta name="application-name" content="MotoRent PRO">
+    <meta name="description" content="Sistema de Gestão e Locação de Motos">
 
-    <!-- Math.js e Chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Web App Manifest embedded via Data URI -->
+    <link rel="manifest" id="pwa-manifest">
+
+    <!-- Favicon / App Icon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%232563eb'/><path d='M416 320a64 64 0 1 0 64 64 64.07 64.07 0 0 0-64-64zm0 80a16 16 0 1 1 16-16 16.018 16.018 0 0 1-16 16zm-320-80a64 64 0 1 0 64 64 64.07 64.07 0 0 0-64-64zm0 80a16 16 0 1 1 16-16 16.018 16.018 0 0 1-16 16zm268-176l-48-96h-80l-32 48h-64a32 32 0 0 0-32 32v16h240z' fill='%23ffffff'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%232563eb'/><path d='M416 320a64 64 0 1 0 64 64 64.07 64.07 0 0 0-64-64zm0 80a16 16 0 1 1 16-16 16.018 16.018 0 0 1-16 16zm-320-80a64 64 0 1 0 64 64 64.07 64.07 0 0 0-64-64zm0 80a16 16 0 1 1 16-16 16.018 16.018 0 0 1-16 16zm268-176l-48-96h-80l-32 48h-64a32 32 0 0 0-32 32v16h240z' fill='%23ffffff'/></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <!-- SDKs do Firebase (Versão Compatível) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root {
-            --bg-main: #090d16;
-            --bg-card: #131b2e;
-            --bg-card-hover: #1c2742;
-            --accent-primary: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.3);
-            --accent-success: #10b981;
-            --accent-orange: #f59e0b;
-            --accent-purple: #8b5cf6;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-color: rgba(255, 255, 255, 0.08);
-            --radius-lg: 16px;
-            --radius-md: 10px;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #030712; color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-
-        .app-container { width: 100%; max-width: 440px; height: 100vh; max-height: 900px; background: var(--bg-main); display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        @media (min-width: 480px) { .app-container { height: 92vh; border-radius: 36px; border: 8px solid #1f293d; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); } }
-
-        /* Top Bar */
-        .top-bar { height: 50px; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); background: rgba(19, 27, 46, 0.8); backdrop-filter: blur(10px); z-index: 10; }
-        .app-title { font-size: 1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
-        .app-title i { color: var(--accent-primary); }
-        .top-actions { display: flex; gap: 8px; align-items: center; }
-        .icon-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
-        .icon-btn:active { transform: scale(0.92); background: var(--accent-primary); }
-        .user-status-btn { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .user-status-btn.logged { border-color: var(--accent-success); color: var(--accent-success); }
-
-        /* Main View Container */
-        .content-area { flex: 1; position: relative; overflow: hidden; }
-        .tab-content { position: absolute; inset: 0; display: none; flex-direction: column; padding: 12px; overflow-y: auto; }
-        .tab-content.active { display: flex; }
-
-        /* Calculator Screen */
-        .display-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 12px 16px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; flex-direction: column; justify-content: flex-end; min-height: 105px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4); }
-        .display-mode { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.75rem; color: var(--text-muted); }
-        .mode-badge { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); padding: 2px 8px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-        .expression-line { color: var(--text-muted); font-size: 0.95rem; min-height: 22px; word-break: break-all; text-align: right; }
-        .result-line { color: var(--text-main); font-size: 1.8rem; font-weight: 700; text-align: right; word-break: break-all; margin-top: 2px; transition: all 0.2s; }
-        .result-line.preview { opacity: 0.45; font-size: 1.4rem; }
-        .result-line.error-text { color: #f43f5e; font-size: 0.85rem; font-weight: 500; font-family: monospace; opacity: 1; }
-
-        /* Quick Function Bar */
-        .quick-functions-bar { margin-bottom: 10px; }
-        .quick-functions-title { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-        .quick-chips-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-        .quick-chips-scroll::-webkit-scrollbar { display: none; }
-        .func-chip { background: var(--bg-card); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .func-chip i { font-size: 0.7rem; color: var(--accent-orange); }
-        .func-chip:active { background: var(--accent-primary); border-color: var(--accent-primary); }
-
-        /* Keypad Toggle Sub-tabs */
-        .keypad-toggle { display: flex; background: var(--bg-card); border-radius: var(--radius-md); padding: 3px; margin-bottom: 8px; border: 1px solid var(--border-color); }
-        .keypad-toggle button { flex: 1; padding: 6px; border: none; background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; border-radius: 7px; cursor: pointer; transition: 0.2s; }
-        .keypad-toggle button.active { background: var(--accent-primary); color: #fff; }
-
-        /* Keypads */
-        .keypad-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; }
-        .sci-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; flex: 1; }
-        .key-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 1.1rem; font-weight: 600; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s; user-select: none; }
-        .key-btn:active { transform: scale(0.95); background: var(--bg-card-hover); }
-        .key-btn.op { color: var(--accent-primary); font-weight: 700; background: rgba(59, 130, 246, 0.1); }
-        .key-btn.sci { color: var(--accent-purple); font-size: 0.85rem; background: rgba(139, 92, 246, 0.1); }
-        .key-btn.action { color: #f43f5e; background: rgba(244, 63, 94, 0.1); }
-        .key-btn.equals { background: var(--accent-primary); color: white; grid-column: span 1; }
-
-        /* Functions Manager Tab */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .section-title { font-size: 1.1rem; font-weight: 700; }
-        .btn-primary { background: var(--accent-primary); color: white; border: none; padding: 8px 14px; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        
-        /* Folders & Functions List */
-        .folder-select-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
-        .folder-chip { background: var(--bg-card); border: 1px solid var(--border-color); padding: 5px 12px; border-radius: 16px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; color: var(--text-muted); }
-        .folder-chip.active { background: var(--accent-purple); color: white; border-color: var(--accent-purple); }
-
-        .function-cards-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
-        .func-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 6px; position: relative; }
-        .func-card-header { display: flex; justify-content: space-between; align-items: center; }
-        .func-name { font-weight: 700; font-size: 0.95rem; color: var(--accent-primary); display: flex; align-items: center; gap: 6px; }
-        .func-body { font-family: monospace; font-size: 0.85rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 6px; border-radius: 6px; }
-        .func-actions { display: flex; gap: 6px; margin-top: 4px; justify-content: flex-end; }
-        .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .btn-sm.fav.active { color: var(--accent-orange); border-color: var(--accent-orange); }
-
-        /* Parameter Quick Inject Chips */
-        .param-chips-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-        .param-chip-btn { background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent-primary); color: var(--accent-primary); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-
-        /* Graph Tab */
-        .chart-container { background: var(--bg-card); border-radius: var(--radius-lg); padding: 10px; border: 1px solid var(--border-color); height: 280px; position: relative; margin-bottom: 12px; }
-        .graph-controls { display: flex; flex-direction: column; gap: 10px; background: var(--bg-card); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
-        .input-group { display: flex; flex-direction: column; gap: 4px; }
-        .input-group label { font-size: 0.75rem; color: var(--text-muted); }
-        .input-field { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-main); font-size: 0.9rem; outline: none; }
-        .input-field:focus { border-color: var(--accent-primary); }
-
-        /* History Tab */
-        .history-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
-        .history-item { background: var(--bg-card); border-radius: var(--radius-md); padding: 10px 12px; border: 1px solid var(--border-color); cursor: pointer; }
-        .history-item:active { background: var(--bg-card-hover); }
-        .history-expr { font-size: 0.85rem; color: var(--text-muted); }
-        .history-res { font-size: 1.1rem; font-weight: 700; color: var(--accent-success); text-align: right; }
-
-        /* Bottom Nav */
-        .bottom-nav { height: 60px; background: rgba(19, 27, 46, 0.95); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; backdrop-filter: blur(10px); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.7rem; cursor: pointer; text-decoration: none; width: 20%; transition: 0.2s; }
-        .nav-item i { font-size: 1.1rem; }
-        .nav-item.active { color: var(--accent-primary); }
-
-        /* Modals */
-        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-end; z-index: 100; opacity: 0; transition: opacity 0.2s; }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .modal-card { background: var(--bg-card); border-top-left-radius: 24px; border-top-right-radius: 24px; width: 100%; max-height: 85%; padding: 20px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px; overflow-y: auto; transform: translateY(100%); transition: transform 0.25s ease-out; }
-        .modal-overlay.active .modal-card { transform: translateY(0); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { font-weight: 700; font-size: 1.1rem; }
-
-        /* Parameter Dynamic Form */
-        .param-field { display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.2); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
-        .param-label-box { display: flex; justify-content: space-between; align-items: center; }
-        .param-label { font-weight: 600; font-size: 0.85rem; color: var(--accent-primary); }
-        .param-custom-name { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
-
-        /* Step Tutorial */
-        .step-box { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-primary); border-radius: var(--radius-md); padding: 12px; font-size: 0.85rem; line-height: 1.4; }
+        .tab-btn.active {
+            border-bottom-color: #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
 
-    <div class="app-container">
-        <!-- Top Bar -->
-        <header class="top-bar">
-            <div class="app-title"><i class="fa-solid fa-calculator"></i> CalcPro</div>
-            <div class="top-actions">
-                <button class="user-status-btn" id="user-status-btn" onclick="openAuthModal()">
-                    <i class="fa-solid fa-cloud"></i> <span id="user-btn-text">Entrar</span>
-                </button>
-                <button class="icon-btn" onclick="openTutorial()"><i class="fa-solid fa-graduation-cap"></i></button>
-                <button class="icon-btn" onclick="openHelp()"><i class="fa-solid fa-circle-question"></i></button>
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 p-2 rounded-lg text-white shadow-md">
+                        <i class="fa-solid fa-motorcycle text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">MotoRent <span class="text-xs font-normal text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-800">PRO</span></span>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Install App Button -->
+                    <button id="pwa-install-btn" onclick="installPWA()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Instalar</span> App
+                    </button>
+                    
+                    <div class="flex items-center space-x-2 text-sm text-slate-400 font-mono">
+                        <i class="fa-solid fa-clock text-blue-400"></i>
+                        <span id="header-clock">--:--</span>
+                    </div>
+                </div>
             </div>
-        </header>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <nav class="bg-slate-800 border-t border-slate-700">
+            <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 flex overflow-x-auto">
+                <button onclick="switchTab('active-rentals')" id="tab-active-rentals" class="tab-btn active text-slate-300 py-3 px-4 sm:px-6 text-sm font-medium border-b-2 border-transparent hover:text-white transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-key"></i> Locações Ativas / Pátio
+                    <span id="badge-active-count" class="ml-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn text-slate-300 py-3 px-4 sm:px-6 text-sm font-medium border-b-2 border-transparent hover:text-white transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Histórico de Locações
+                </button>
+                <button onclick="switchTab('clients')" id="tab-clients" class="tab-btn text-slate-300 py-3 px-4 sm:px-6 text-sm font-medium border-b-2 border-transparent hover:text-white transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-users"></i> Clientes
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn text-slate-300 py-3 px-4 sm:px-6 text-sm font-medium border-b-2 border-transparent hover:text-white transition-all flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-gear"></i> Configurações
+                </button>
+            </div>
+        </nav>
+    </header>
 
-        <!-- Dynamic Content Area -->
-        <main class="content-area">
-            
-            <!-- TAB 1: CALCULATOR -->
-            <section id="tab-calc" class="tab-content active">
-                <div class="display-container">
-                    <div class="display-mode">
-                        <span id="angle-mode-btn" class="mode-badge" onclick="toggleAngleMode()">DEG</span>
-                        <span id="folder-badge" style="font-size:0.7rem; color:var(--text-muted)">Geral</span>
-                    </div>
-                    <div class="expression-line" id="calc-expression"></div>
-                    <div class="result-line preview" id="calc-result">0</div>
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: ACTIVE RENTALS -->
+        <section id="content-active-rentals" class="tab-content space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">Motos no Pátio / Em Uso</h1>
+                    <p class="text-sm text-slate-500">Gerencie as locações em andamento, edite horários ou receba motos.</p>
                 </div>
+                <button onclick="openNewRentalModal()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Nova Locação
+                </button>
+            </div>
 
-                <!-- Favorite / Quick Access Functions Bar -->
-                <div class="quick-functions-bar">
-                    <div class="quick-functions-title">
-                        <span><i class="fa-solid fa-star" style="color:var(--accent-orange)"></i> Atalhos de Funções</span>
-                        <span style="cursor:pointer; color:var(--accent-primary)" onclick="switchTab('tab-funcs')">Gerenciar</span>
-                    </div>
-                    <div class="quick-chips-scroll" id="quick-chips-container">
-                        <!-- Chips injected by JS -->
-                    </div>
+            <!-- Active Rentals Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <th class="p-4">Moto / Placa</th>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4">Data e Hora de Saída</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="active-rentals-table-body" class="divide-y divide-slate-200 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Scientific vs Basic Toggle -->
-                <div class="keypad-toggle">
-                    <button id="btn-toggle-basic" class="active" onclick="setKeypadMode('basic')">Básica</button>
-                    <button id="btn-toggle-sci" onclick="setKeypadMode('sci')">Científica</button>
+                <div id="active-empty-state" class="p-12 text-center text-slate-500">
+                    <i class="fa-solid fa-motorcycle text-4xl mb-3 text-slate-300"></i>
+                    <p class="font-semibold text-slate-700">Nenhuma moto alugada no momento</p>
+                    <p class="text-xs text-slate-400 mt-1">Todas as motos estão disponíveis no pátio.</p>
                 </div>
+            </div>
+        </section>
 
-                <!-- Basic Keypad -->
-                <div id="keypad-basic" class="keypad-grid">
-                    <button class="key-btn action" onclick="clearDisplay()">AC</button>
-                    <button class="key-btn op" onclick="insertOp('(')">(</button>
-                    <button class="key-btn op" onclick="insertOp(')')">)</button>
-                    <button class="key-btn op" onclick="deleteChar()"><i class="fa-solid fa-backspace"></i></button>
-
-                    <button class="key-btn" onclick="insertOp('7')">7</button>
-                    <button class="key-btn" onclick="insertOp('8')">8</button>
-                    <button class="key-btn" onclick="insertOp('9')">9</button>
-                    <button class="key-btn op" onclick="insertOp('/')">/</button>
-
-                    <button class="key-btn" onclick="insertOp('4')">4</button>
-                    <button class="key-btn" onclick="insertOp('5')">5</button>
-                    <button class="key-btn" onclick="insertOp('6')">6</button>
-                    <button class="key-btn op" onclick="insertOp('*')">*</button>
-
-                    <button class="key-btn" onclick="insertOp('1')">1</button>
-                    <button class="key-btn" onclick="insertOp('2')">2</button>
-                    <button class="key-btn" onclick="insertOp('3')">3</button>
-                    <button class="key-btn op" onclick="insertOp('-')">-</button>
-
-                    <button class="key-btn" onclick="insertOp('0')">0</button>
-                    <button class="key-btn" onclick="insertOp('.')">.</button>
-                    <button class="key-btn op" onclick="insertOp('^')">^</button>
-                    <button class="key-btn op" onclick="insertOp('+')">+</button>
-
-                    <button class="key-btn equals" style="grid-column: span 4;" onclick="calculateResult()">=</button>
-                </div>
-
-                <!-- Scientific Keypad -->
-                <div id="keypad-sci" class="sci-grid" style="display: none;">
-                    <button class="key-btn sci" onclick="insertOp('sin(')">sin</button>
-                    <button class="key-btn sci" onclick="insertOp('cos(')">cos</button>
-                    <button class="key-btn sci" onclick="insertOp('tan(')">tan</button>
-                    <button class="key-btn sci" onclick="insertOp('log(')">log</button>
-                    <button class="key-btn action" onclick="clearDisplay()">AC</button>
-
-                    <button class="key-btn sci" onclick="insertOp('asin(')">asin</button>
-                    <button class="key-btn sci" onclick="insertOp('acos(')">acos</button>
-                    <button class="key-btn sci" onclick="insertOp('atan(')">atan</button>
-                    <button class="key-btn sci" onclick="insertOp('ln(')">ln</button>
-                    <button class="key-btn op" onclick="deleteChar()"><i class="fa-solid fa-backspace"></i></button>
-
-                    <button class="key-btn sci" onclick="insertOp('sqrt(')">√</button>
-                    <button class="key-btn sci" onclick="insertOp('cbrt(')">∛</button>
-                    <button class="key-btn sci" onclick="insertOp('abs(')">|x|</button>
-                    <button class="key-btn sci" onclick="insertOp('pi')">π</button>
-
-                    <button class="key-btn op" onclick="insertOp('(')">(</button>
-                    <button class="key-btn op" onclick="insertOp(')')">)</button>
-                    <button class="key-btn sci" onclick="insertOp('e')">e</button>
-                    <button class="key-btn sci" onclick="insertOp('!')">x!</button>
-                    <button class="key-btn op" onclick="insertOp('^')">xⁿ</button>
-                    <button class="key-btn equals" onclick="calculateResult()">=</button>
-                </div>
-            </section>
-
-            <!-- TAB 2: FUNCTIONS MANAGER -->
-            <section id="tab-funcs" class="tab-content">
-                <div class="section-header">
-                    <span class="section-title">Minhas Funções</span>
-                    <button class="btn-primary" onclick="openNewFuncModal()"><i class="fa-solid fa-plus"></i> Nova</button>
-                </div>
-
-                <!-- Folder selector -->
-                <div class="folder-select-bar" id="folder-chips-bar">
-                    <!-- Dynamic Folders -->
-                </div>
-
-                <div class="function-cards-list" id="functions-list">
-                    <!-- Dynamic Cards injected by JS -->
-                </div>
-            </section>
-
-            <!-- TAB 3: GRAPH PLOTTER -->
-            <section id="tab-graph" class="tab-content">
-                <div class="section-header">
-                    <span class="section-title">Gráfico 2D</span>
-                </div>
-                <div class="chart-container">
-                    <canvas id="functionChart"></canvas>
-                </div>
-                <div class="graph-controls">
-                    <div class="input-group">
-                        <label>Função f(x)</label>
-                        <select id="graph-func-select" class="input-field" onchange="plotGraph()">
-                            <!-- Options dynamically populated -->
+        <!-- TAB 2: HISTORY -->
+        <section id="content-history" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Histórico Geral de Transações
+                </h2>
+                
+                <!-- Filters -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Filtrar por Moto</label>
+                        <select id="filter-history-bike" onchange="applyHistoryFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                            <option value="ALL">Todas as Motos</option>
                         </select>
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <div class="input-group" style="flex:1;">
-                            <label>X Mínimo</label>
-                            <input type="number" id="graph-xmin" class="input-field" value="-10" onchange="plotGraph()">
-                        </div>
-                        <div class="input-group" style="flex:1;">
-                            <label>X Máximo</label>
-                            <input type="number" id="graph-xmax" class="input-field" value="10" onchange="plotGraph()">
-                        </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Período</label>
+                        <select id="filter-history-period" onchange="toggleCustomPeriod(this.value); applyHistoryFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                            <option value="ALL">Todo o Histórico</option>
+                            <option value="TODAY">Hoje</option>
+                            <option value="MONTH">Este Mês</option>
+                            <option value="YEAR">Este Ano</option>
+                            <option value="CUSTOM">Personalizado</option>
+                        </select>
+                    </div>
+                    <div id="custom-date-start" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data Início</label>
+                        <input type="date" id="filter-date-start" onchange="applyHistoryFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                    </div>
+                    <div id="custom-date-end" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data Fim</label>
+                        <input type="date" id="filter-date-end" onchange="applyHistoryFilters()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-blue-500 text-sm outline-none">
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- TAB 4: HISTORY -->
-            <section id="tab-history" class="tab-content">
-                <div class="section-header">
-                    <span class="section-title">Histórico</span>
-                    <button class="btn-sm" onclick="clearHistory()"><i class="fa-solid fa-trash"></i> Limpar</button>
-                </div>
-                <div class="history-list" id="history-list">
-                    <!-- History entries -->
-                </div>
-            </section>
-
-        </main>
-
-        <!-- Bottom Navigation Bar -->
-        <nav class="bottom-nav">
-            <a class="nav-item active" onclick="switchTab('tab-calc', this)">
-                <i class="fa-solid fa-calculator"></i>
-                <span>Calc</span>
-            </a>
-            <a class="nav-item" onclick="switchTab('tab-funcs', this)">
-                <i class="fa-solid fa-code"></i>
-                <span>Funções</span>
-            </a>
-            <a class="nav-item" onclick="switchTab('tab-graph', this)">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Gráfico</span>
-            </a>
-            <a class="nav-item" onclick="switchTab('tab-history', this)">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <span>Histórico</span>
-            </a>
-        </nav>
-
-        <!-- MODAL: FIREBASE AUTH & SYNC -->
-        <div id="modal-auth" class="modal-overlay">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span class="modal-title"><i class="fa-solid fa-cloud-arrow-up" style="color:var(--accent-primary)"></i> Sincronização na Nuvem</span>
-                    <button class="icon-btn" onclick="closeModal('modal-auth')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-
-                <div id="auth-logged-out-view" style="display:flex; flex-direction:column; gap:10px;">
-                    <p style="font-size:0.85rem; color:var(--text-muted)">Crie uma conta para salvar suas funções na nuvem e acessá-las de qualquer dispositivo.</p>
-                    
-                    <div class="input-group">
-                        <label>E-mail</label>
-                        <input type="email" id="auth-email" class="input-field" placeholder="seuemail@exemplo.com">
+            <!-- Stats Dashboard -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                        <i class="fa-solid fa-sack-dollar text-xl"></i>
                     </div>
-                    <div class="input-group">
-                        <label>Senha</label>
-                        <input type="password" id="auth-password" class="input-field" placeholder="******">
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total Recebido</p>
+                        <p id="stat-total-revenue" class="text-lg font-bold text-slate-800">R$ 0,00</p>
                     </div>
-
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn-primary" style="flex:1; justify-content:center;" onclick="handleLogin()">Entrar</button>
-                        <button class="btn-sm" style="flex:1; justify-content:center; padding:10px;" onclick="handleRegister()">Cadastrar</button>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                        <i class="fa-solid fa-business-time text-xl"></i>
                     </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Tempo Exato em Uso</p>
+                        <p id="stat-total-hours" class="text-lg font-bold text-slate-800">0h 0m</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                        <i class="fa-solid fa-receipt text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total de Registros</p>
+                        <p id="stat-total-rentals" class="text-lg font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+            </div>
 
-                    <div style="text-align:center; margin: 4px 0; font-size:0.8rem; color:var(--text-muted)">ou</div>
+            <!-- History Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <th class="p-4">Saída (Data/Hora)</th>
+                                <th class="p-4">Chegada (Data/Hora)</th>
+                                <th class="p-4">Moto / Descrição</th>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4">Duração</th>
+                                <th class="p-4">Cobrado</th>
+                                <th class="p-4">Pago</th>
+                                <th class="p-4">Forma Pagto.</th>
+                                <th class="p-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-200 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="history-empty-state" class="hidden p-8 text-center text-slate-500">
+                    <i class="fa-solid fa-folder-open text-4xl mb-3 text-slate-300"></i>
+                    <p class="font-medium">Nenhum histórico encontrado para os filtros selecionados.</p>
+                </div>
+            </div>
+        </section>
 
-                    <button class="btn-sm" style="justify-content:center; padding:10px; background:white; color:#111; font-weight:600;" onclick="handleGoogleLogin()">
-                        <i class="fa-brands fa-google"></i> Entrar com Google
+        <!-- TAB 3: CLIENTS -->
+        <section id="content-clients" class="tab-content hidden space-y-6">
+            <div id="client-list-view" class="space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800">Cadastro de Clientes</h1>
+                        <p class="text-sm text-slate-500">Ordem alfabética, gestão de saldos, arquivamento e remoção.</p>
+                    </div>
+                    <button onclick="openNewClientModal()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i> Cadastrar Cliente
                     </button>
                 </div>
 
-                <div id="auth-logged-in-view" style="display:none; flex-direction:column; gap:12px; text-align:center;">
-                    <p style="font-size:0.9rem; color:var(--accent-success);"><i class="fa-solid fa-circle-check"></i> Você está conectado!</p>
-                    <p id="user-email-display" style="font-size:0.85rem; color:var(--text-main); font-weight:600;"></p>
-                    <button class="btn-primary" style="justify-content:center;" onclick="syncDataWithCloud()"><i class="fa-solid fa-rotate"></i> Sincronizar Agora</button>
-                    <button class="btn-sm" style="justify-content:center; color:#f43f5e;" onclick="handleLogout()">Sair da Conta</button>
+                <!-- Search and Filter Bar -->
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-3 px-4">
+                    <div class="flex items-center flex-1 w-full">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-3"></i>
+                        <input type="text" id="client-search-input" oninput="renderClientsList()" placeholder="Pesquisar cliente por nome..." class="w-full bg-transparent border-none text-sm outline-none text-slate-700">
+                    </div>
+                    
+                    <!-- View toggle: Active vs Archived -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg w-full sm:w-auto">
+                        <button id="btn-show-active-clients" onclick="setClientStatusFilter(false)" class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm transition">
+                            <i class="fa-solid fa-user-check mr-1"></i> Ativos
+                        </button>
+                        <button id="btn-show-archived-clients" onclick="setClientStatusFilter(true)" class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-md text-slate-500 hover:text-slate-800 transition">
+                            <i class="fa-solid fa-box-archive mr-1"></i> Arquivados
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Clients Grid -->
+                <div id="clients-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
+
+            <!-- Client Details View -->
+            <div id="client-detail-view" class="hidden space-y-6">
+                <button onclick="closeClientDetail()" class="text-sm text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar para Lista de Clientes
+                </button>
+
+                <!-- Profile Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                        <img id="detail-client-photo" src="" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-4 border-slate-100 shadow">
+                        <div>
+                            <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                <h2 id="detail-client-name" class="text-2xl font-bold text-slate-800">--</h2>
+                                <span id="detail-client-archived-badge" class="hidden text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold"><i class="fa-solid fa-box-archive mr-1"></i>Arquivado</span>
+                            </div>
+                            <p id="detail-client-phone" class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-phone mr-1"></i>--</p>
+                            <div class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold" id="detail-client-balance-badge">
+                                Saldo Atual: <span id="detail-client-balance">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-center">
+                        <button onclick="openReceiveClientPaymentModal()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Lançar Pagamento / Débito
+                        </button>
+                        <button onclick="openEditClientModal(currentDetailClientId)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-pen-to-square"></i> Editar
+                        </button>
+                        <button id="btn-detail-toggle-archive" onclick="toggleArchiveClient(currentDetailClientId)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1">
+                            <!-- Populated dynamically -->
+                        </button>
+                        <button onclick="deleteClient(currentDetailClientId)" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-2 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Client History Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">Extrato & Histórico do Cliente</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="p-3">Data/Hora Saída</th>
+                                    <th class="p-3">Data/Hora Chegada</th>
+                                    <th class="p-3">Moto / Descrição</th>
+                                    <th class="p-3">Cobrado</th>
+                                    <th class="p-3">Pago</th>
+                                    <th class="p-3">Saldo Antes</th>
+                                    <th class="p-3">Saldo Após</th>
+                                    <th class="p-3 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="client-history-table-body" class="divide-y divide-slate-200 text-xs sm:text-sm">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="client-history-empty" class="hidden p-6 text-center text-slate-500 text-sm">
+                        Este cliente ainda não possui movimentações registradas.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SETTINGS -->
+        <section id="content-settings" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Tariff Rules -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex items-center space-x-3 text-slate-800">
+                        <div class="p-2.5 bg-amber-100 text-amber-600 rounded-lg">
+                            <i class="fa-solid fa-coins text-xl"></i>
+                        </div>
+                        <h2 class="text-lg font-bold">Tarifa e Regra de Cobrança</h2>
+                    </div>
+                    <div class="text-xs text-slate-500 space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <p><strong>Tempo Exato:</strong> Calculado em minutos exatos (Ex: 30m = 0,5h).</p>
+                        <p><strong>Arredondamento Financeiro:</strong> O valor é arredondado para o próximo inteiro em Reais (`Math.ceil`). Exemplo: R$ 7,50 passa a ser <strong>R$ 8,00</strong>.</p>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor da Hora (R$ / Hora)</label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-500 font-bold text-sm">R$</span>
+                            <input type="number" id="setting-hourly-rate" min="1" step="1" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="saveHourlyRate()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition">
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fleet Management -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 text-slate-800">
+                            <div class="p-2.5 bg-blue-100 text-blue-600 rounded-lg">
+                                <i class="fa-solid fa-motorcycle text-xl"></i>
+                            </div>
+                            <h2 class="text-lg font-bold">Frota de Motos</h2>
+                        </div>
+                        <button onclick="openNewBikeModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Nova Moto
+                        </button>
+                    </div>
+
+                    <div class="divide-y divide-slate-100" id="bikes-settings-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: CONFIRMAÇÃO DE AÇÃO -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirm-modal-title" class="text-lg font-bold text-slate-800">Confirmar Ação</h3>
+            <p id="confirm-modal-msg" class="text-xs text-slate-500">Tem certeza de que deseja prosseguir?</p>
+            <div class="flex justify-center gap-3 pt-2">
+                <button onclick="closeModal('modal-confirm')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50 flex-1">Cancelar</button>
+                <button id="confirm-modal-action-btn" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium shadow flex-1">Confirmar</button>
+            </div>
         </div>
+    </div>
 
-        <!-- MODAL: CREATE / EDIT FUNCTION -->
-        <div id="modal-func" class="modal-overlay">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span class="modal-title" id="modal-func-title">Nova Função</span>
-                    <button class="icon-btn" onclick="closeModal('modal-func')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <input type="hidden" id="func-editing-id" value="">
-                
-                <div class="input-group">
-                    <label>Nome da Função (ex: imc, hipotenusa)</label>
-                    <input type="text" id="func-input-name" class="input-field" placeholder="ex: areaCirculo">
-                </div>
+    <!-- MODAL: NOVA OU EDITAR LOCAÇÃO ATIVA -->
+    <div id="modal-rental-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modal-rental-title" class="text-lg font-bold text-slate-800">Iniciar Nova Locação</h3>
+                <button onclick="closeModal('modal-rental-form')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="form-rental" onsubmit="handleSaveRental(event)" class="space-y-4">
+                <input type="hidden" id="rental-edit-id">
 
-                <div class="input-group">
-                    <label>Parâmetros da fórmula (separados por vírgula)</label>
-                    <input type="text" id="func-input-params" class="input-field" placeholder="ex: peso, altura" oninput="updateParamInjectChips()">
-                    <div id="param-chips-container" class="param-chips-bar"></div>
-                </div>
-
-                <div class="input-group">
-                    <label>Nomes para exibição (rótulos visíveis ao usar)</label>
-                    <input type="text" id="func-input-labels" class="input-field" placeholder="ex: Peso (kg), Altura (m)">
-                </div>
-
-                <div class="input-group">
-                    <label>Pasta / Grupo</label>
-                    <select id="func-select-folder" class="input-field" onchange="toggleFolderNewInput(this)">
-                        <!-- Populated by JS -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Selecione o Cliente</label>
+                    <select id="rental-client-select" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <!-- Populated dynamically -->
                     </select>
-                    <input type="text" id="func-input-new-folder" class="input-field" placeholder="Digite o nome da nova pasta" style="display:none; margin-top:6px;">
                 </div>
 
-                <div class="input-group">
-                    <label>Expressão Matemática</label>
-                    <input type="text" id="func-input-body" class="input-field" placeholder="ex: peso / (altura^2)">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Selecione a Moto</label>
+                    <select id="rental-bike-select" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
                 </div>
 
-                <button class="btn-primary" style="justify-content:center; padding: 12px;" onclick="saveCustomFunction()">Salvar Função</button>
-            </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Saída</label>
+                        <input type="date" id="rental-date-start" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hora de Saída</label>
+                        <input type="time" id="rental-time-start" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-rental-form')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow">Salvar Locação</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- MODAL: SEPARATE PARAMETER INPUT -->
-        <div id="modal-params" class="modal-overlay">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span class="modal-title" id="param-modal-title">Executar Função</span>
-                    <button class="icon-btn" onclick="closeModal('modal-params')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end;">
-                    <button class="btn-sm" onclick="clearParamInputs()"><i class="fa-solid fa-broom"></i> Limpar Campos</button>
-                </div>
-
-                <div id="param-inputs-container" style="display:flex; flex-direction:column; gap:10px;">
-                    <!-- Dynamic Parameter Fields -->
-                </div>
-
-                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-success); padding: 12px; border-radius: var(--radius-md); text-align: center;">
-                    <div style="font-size: 0.75rem; color: var(--text-muted)">Resultado em Tempo Real:</div>
-                    <div id="param-live-result" style="font-size: 1.3rem; font-weight: 700; color: var(--accent-success); word-break: break-all;">-</div>
-                </div>
-
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-primary" style="flex:1; justify-content:center;" onclick="sendParamResultToDisplay()">Enviar ao Visor</button>
-                </div>
+    <!-- MODAL: RECEBER MOTO / FINALIZAR LOCAÇÃO -->
+    <div id="modal-return-bike" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered text-emerald-600"></i> Receber Moto e Fechar Conta
+                </h3>
+                <button onclick="closeModal('modal-return-bike')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-        </div>
 
-        <!-- MODAL: TUTORIAL -->
-        <div id="modal-tutorial" class="modal-overlay">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span class="modal-title"><i class="fa-solid fa-graduation-cap" style="color:var(--accent-primary)"></i> Tutorial Rápido</span>
-                    <button class="icon-btn" onclick="closeModal('modal-tutorial')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="step-box">
-                    <strong>1. Sincronização em Nuvem:</strong><br>
-                    Clique no botão do topo para criar uma conta ou entrar. Todas as suas funções e histórico ficam salvos no banco de dados.
-                </div>
-                <div class="step-box">
-                    <strong>2. Rótulos e Pastas Organizadoras:</strong><br>
-                    Crie rótulos claros para seus parâmetros (ex: <em>Altura em metros</em>) e escolha em qual pasta salvar sua função.
-                </div>
-                <div class="step-box">
-                    <strong>3. Memória de Entradas:</strong><br>
-                    Suas últimas entradas em cada função ficam salvas automaticamente para reutilizações rápidas!
-                </div>
-                <button class="btn-primary" style="justify-content:center;" onclick="closeModal('modal-tutorial')">Entendi!</button>
+            <div class="bg-slate-50 p-3 rounded-lg text-xs space-y-1 text-slate-600 border border-slate-200">
+                <p><strong>Cliente:</strong> <span id="return-client-name">--</span></p>
+                <p><strong>Moto:</strong> <span id="return-bike-name">--</span></p>
+                <p><strong>Saída:</strong> <span id="return-datetime-start">--/--/---- --:--</span></p>
             </div>
-        </div>
 
-        <!-- MODAL: HELP & DOCS -->
-        <div id="modal-help" class="modal-overlay">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span class="modal-title"><i class="fa-solid fa-circle-question" style="color:var(--accent-primary)"></i> Ajuda & Funções</span>
-                    <button class="icon-btn" onclick="closeModal('modal-help')"><i class="fa-solid fa-xmark"></i></button>
+            <!-- Return Date/Time & Calc -->
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Chegada</label>
+                        <input type="date" id="return-date-end" onchange="calculateRentalCost()" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hora de Chegada</label>
+                        <input type="time" id="return-time-end" onchange="calculateRentalCost()" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
                 </div>
-                <div style="font-size: 0.85rem; color: var(--text-muted); display:flex; flex-direction:column; gap:8px;">
-                    <p><strong>Sintaxe Suportada:</strong></p>
-                    <ul style="padding-left: 20px;">
-                        <li>Soma/Sub/Mult/Div: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code></li>
-                        <li>Potência: <code>2^3</code></li>
-                        <li>Trigonometria: <code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code></li>
-                        <li>Constantes: <code>pi</code>, <code>e</code></li>
-                    </ul>
-                    <p><strong>Exemplo de Modelos:</strong></p>
-                    <button class="btn-sm" onclick="loadPresetFuncs()">Carregar Funções de Exemplo (IMC, Pitágoras)</button>
+
+                <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-2 text-sm">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Tempo Percorrido Exato:</span>
+                        <span id="return-calc-hours" class="font-bold text-slate-800">0 min</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>a) Valor da Locação (Arredondado R$):</span>
+                        <span id="return-calc-current-price" class="font-bold text-slate-800">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>b) Saldo Prévio do Cliente:</span>
+                        <span id="return-calc-prev-balance" class="font-bold">R$ 0,00</span>
+                    </div>
+                    <div class="border-t border-blue-200 pt-2 flex justify-between font-bold text-base text-slate-900">
+                        <span>c) Valor Total Devido:</span>
+                        <span id="return-calc-total-due" class="text-blue-700">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
+            <!-- Payment Form -->
+            <form id="form-return-bike" onsubmit="handleFinishRental(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Forma de Pagamento</label>
+                    <select id="return-payment-method" onchange="togglePaymentFields(this.value, 'return')" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="DINHEIRO">Dinheiro</option>
+                        <option value="PIX">PIX</option>
+                        <option value="PIX_DINHEIRO">PIX + Dinheiro</option>
+                    </select>
+                </div>
+
+                <div id="return-payment-single-field">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Recebido (R$)</label>
+                    <input type="number" step="0.01" min="0" id="return-amount-paid-single" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0,00">
+                </div>
+
+                <div id="return-payment-double-fields" class="hidden grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor em PIX (R$)</label>
+                        <input type="number" step="0.01" min="0" id="return-amount-paid-pix" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0,00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor em Dinheiro (R$)</label>
+                        <input type="number" step="0.01" min="0" id="return-amount-paid-cash" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0,00">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-return-bike')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow">Confirmar Recebimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR HISTÓRICO -->
+    <div id="modal-edit-history" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800">Editar Registro do Histórico</h3>
+                <button onclick="closeModal('modal-edit-history')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="form-edit-history" onsubmit="handleSaveHistoryEdit(event)" class="space-y-4">
+                <input type="hidden" id="history-edit-id">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Saída</label>
+                        <input type="date" id="history-edit-date-start" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hora de Saída</label>
+                        <input type="time" id="history-edit-time-start" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Chegada</label>
+                        <input type="date" id="history-edit-date-end" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hora de Chegada</label>
+                        <input type="time" id="history-edit-time-end" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Moto / Descrição</label>
+                    <select id="history-edit-bike-select" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Cobrado (R$)</label>
+                        <input type="number" step="0.01" min="0" id="history-edit-amount-charged" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Pago (R$)</label>
+                        <input type="number" step="0.01" min="0" id="history-edit-amount-paid" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Forma de Pagamento</label>
+                    <select id="history-edit-payment-method" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none">
+                        <option value="DINHEIRO">Dinheiro</option>
+                        <option value="PIX">PIX</option>
+                        <option value="PIX_DINHEIRO">PIX + Dinheiro</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-edit-history')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CADASTRAR/EDITAR CLIENTE -->
+    <div id="modal-client-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modal-client-title" class="text-lg font-bold text-slate-800">Cadastrar Novo Cliente</h3>
+                <button onclick="closeModal('modal-client-form')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="form-client" onsubmit="handleSaveClient(event)" class="space-y-4">
+                <input type="hidden" id="client-edit-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome Completo</label>
+                    <input type="text" id="client-name-input" required placeholder="Ex: Carlos Silva" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Telefone / WhatsApp</label>
+                    <input type="text" id="client-phone-input" placeholder="(00) 90000-0000" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">URL da Foto / Avatar (Opcional)</label>
+                    <input type="url" id="client-photo-input" placeholder="https://..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-client-form')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: LANÇAR PAGAMENTO (CRÉDITO) OU DÉBITO -->
+    <div id="modal-receive-client-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-blue-600"></i> Lançar Crédito / Débito no Saldo
+                </h3>
+                <button onclick="closeModal('modal-receive-client-payment')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="bg-slate-50 p-3 rounded-lg text-xs space-y-1">
+                <p><strong>Cliente:</strong> <span id="direct-payment-client-name">--</span></p>
+                <p><strong>Saldo Atual:</strong> <span id="direct-payment-client-balance" class="font-bold">R$ 0,00</span></p>
+            </div>
+
+            <form id="form-direct-payment" onsubmit="handleDirectPayment(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Operação</label>
+                    <select id="direct-transaction-type" onchange="toggleTransactionTypeUI(this.value)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="CREDIT" class="text-emerald-600">➕ Receber Pagamento / Adicionar Crédito (+)</option>
+                        <option value="DEBIT" class="text-red-600">➖ Lançar Débito / Saldo Negativo (-)</option>
+                    </select>
+                </div>
+
+                <div id="direct-payment-method-container">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Forma de Pagamento</label>
+                    <select id="direct-payment-method" onchange="togglePaymentFields(this.value, 'direct')" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="DINHEIRO">Dinheiro</option>
+                        <option value="PIX">PIX</option>
+                        <option value="PIX_DINHEIRO">PIX + Dinheiro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição / Motivo</label>
+                    <input type="text" id="direct-description" placeholder="Ex: Adiantamento, Multa, Taxa de Capacetes..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div id="direct-payment-single-field">
+                    <label id="direct-label-amount" class="block text-xs font-semibold text-slate-600 mb-1">Valor Recebido (R$)</label>
+                    <input type="number" step="0.01" min="0.01" id="direct-amount-single" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0,00">
+                </div>
+
+                <div id="direct-payment-double-fields" class="hidden grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor em PIX (R$)</label>
+                        <input type="number" step="0.01" min="0" id="direct-amount-pix" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0,00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor em Dinheiro (R$)</label>
+                        <input type="number" step="0.01" min="0" id="direct-amount-cash" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0,00">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-receive-client-payment')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" id="direct-submit-btn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow">Confirmar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CADASTRAR/EDITAR MOTO -->
+    <div id="modal-bike-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modal-bike-title" class="text-lg font-bold text-slate-800">Cadastrar Nova Moto</h3>
+                <button onclick="closeModal('modal-bike-form')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="form-bike" onsubmit="handleSaveBike(event)" class="space-y-4">
+                <input type="hidden" id="bike-edit-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Modelo da Moto</label>
+                    <input type="text" id="bike-model-input" required placeholder="Ex: Honda CG 160 Titan" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Placa</label>
+                    <input type="text" id="bike-plate-input" required placeholder="Ex: ABC-1234" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                </div>
+
+                <div id="bike-status-container" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Status da Moto</label>
+                    <select id="bike-status-input" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="AVAILABLE">Disponível</option>
+                        <option value="RENTED">Em Uso (Alugada)</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-bike-form')" class="px-4 py-2 rounded-lg border text-sm font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow">Salvar Moto</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO DO FIREBASE ---
-        // substitua os valores abaixo pelas chaves do seu console do firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyBK3Wj1a85EMoViSlv7KjgzqCeYQqCsAY8",
-            authDomain: "shullin-scalcpro.firebaseapp.com",
-            projectId: "shullin-scalcpro",
-            storageBucket: "shullin-scalcpro.firebasestorage.app",
-            messagingSenderId: "868173755560",
-            appId: "1:868173755560:web:755dfa2bbc7792cd727e9d"
+        /* ==========================================
+           GLOBAL STATE & STORAGE CONSTANTS
+           ========================================== */
+        const STORAGE_KEYS = {
+            CLIENTS: 'motorent_clients_v2',
+            BIKES: 'motorent_bikes_v2',
+            ACTIVE_RENTALS: 'motorent_active_rentals_v2',
+            HISTORY: 'motorent_history_v2',
+            HOURLY_RATE: 'motorent_hourly_rate_v2'
         };
 
-        // Inicializar Firebase
-        let auth, db, currentUser = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            db = firebase.firestore();
+        let clients = [];
+        let bikes = [];
+        let activeRentals = [];
+        let history = [];
+        let hourlyRate = 10;
+        let currentDetailClientId = null;
+        let activeReturnRentalId = null;
+        let pendingConfirmCallback = null;
+        let showArchivedClients = false;
 
-            // Monitorar estado de autenticação
-            auth.onAuthStateChanged(user => {
-                currentUser = user;
-                const statusBtn = document.getElementById('user-status-btn');
-                const btnText = document.getElementById('user-btn-text');
+        let deferredPrompt = null;
 
-                if (user) {
-                    statusBtn.classList.add('logged');
-                    btnText.innerText = user.email ? user.email.split('@')[0] : "Conectado";
-                    document.getElementById('auth-logged-out-view').style.display = 'none';
-                    document.getElementById('auth-logged-in-view').style.display = 'flex';
-                    document.getElementById('user-email-display').innerText = user.email;
-                    loadUserDataFromCloud();
-                } else {
-                    statusBtn.classList.remove('logged');
-                    btnText.innerText = "Entrar";
-                    document.getElementById('auth-logged-out-view').style.display = 'flex';
-                    document.getElementById('auth-logged-in-view').style.display = 'none';
-                }
+        function setupPWA() {
+            const manifestObj = {
+                name: "MotoRent PRO",
+                short_name: "MotoRent",
+                start_url: "./",
+                display: "standalone",
+                background_color: "#f8fafc",
+                theme_color: "#0f172a",
+                icons: [
+                    {
+                        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%232563eb'/><path d='M416 320a64 64 0 1 0 64 64 64.07 64.07 0 0 0-64-64zm0 80a16 16 0 1 1 16-16 16.018 16.018 0 0 1-16 16zm-320-80a64 64 0 1 0 64 64 64.07 64.07 0 0 0-64-64zm0 80a16 16 0 1 1 16-16 16.018 16.018 0 0 1-16 16zm268-176l-48-96h-80l-32 48h-64a32 32 0 0 0-32 32v16h240z' fill='%23ffffff'/></svg>",
+                        sizes: "512x512",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    }
+                ]
+            };
+
+            const stringManifest = JSON.stringify(manifestObj);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            document.getElementById('pwa-manifest').setAttribute('href', manifestURL);
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                const btn = document.getElementById('pwa-install-btn');
+                if (btn) btn.classList.remove('hidden');
             });
-        } catch(e) {
-            console.log("Firebase não configurado ou chaves pendentes.");
-        }
 
-        // --- SERVICE WORKER REGISTRATION (OFFLINE SUPPORT) ---
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('Service Worker registrado com sucesso.'))
-                .catch(err => console.log('Erro ao registrar Service Worker:', err));
-        }
-
-        // --- APP STATE ---
-        let customFunctions = JSON.parse(localStorage.getItem('calc_functions')) || [
-            { id: '1', name: 'hipo', params: ['a', 'b'], labels: ['Cateto A', 'Cateto B'], body: 'sqrt(a^2 + b^2)', folder: 'Geometria', fav: true, lastInputs: {} },
-            { id: '2', name: 'imc', params: ['peso', 'altura'], labels: ['Peso (kg)', 'Altura (m)'], body: 'peso / (altura^2)', folder: 'Saúde', fav: true, lastInputs: {} }
-        ];
-        let history = JSON.parse(localStorage.getItem('calc_history')) || [];
-        let activeFolder = 'Todas';
-        let angleMode = 'DEG';
-        let currentExecFunc = null;
-        let chartInstance = null;
-
-        // --- INITIALIZATION ---
-        window.addEventListener('DOMContentLoaded', () => {
-            renderFolderChips();
-            renderQuickChips();
-            renderFunctionsList();
-            renderHistory();
-            initChart();
-        });
-
-        // --- AUTHENTICATION & CLOUD SYNC LOGIC ---
-        function openAuthModal() { openModal('modal-auth'); }
-
-        function handleLogin() {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-password').value;
-            if(!email || !pass) return alert('Preencha e-mail e senha!');
-
-            auth.signInWithEmailAndPassword(email, pass)
-                .then(() => closeModal('modal-auth'))
-                .catch(err => alert('Erro no login: ' + err.message));
-        }
-
-        function handleRegister() {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-password').value;
-            if(!email || !pass) return alert('Preencha e-mail e senha!');
-
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then(() => {
-                    alert('Conta criada com sucesso!');
-                    syncDataWithCloud();
-                    closeModal('modal-auth');
-                })
-                .catch(err => alert('Erro no cadastro: ' + err.message));
-        }
-
-        function handleGoogleLogin() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then(() => closeModal('modal-auth'))
-                .catch(err => alert('Erro ao entrar com Google: ' + err.message));
-        }
-
-        function handleLogout() {
-            auth.signOut().then(() => closeModal('modal-auth'));
-        }
-
-        function syncDataWithCloud() {
-            if(!currentUser) return;
-            db.collection('users').doc(currentUser.uid).set({
-                customFunctions: customFunctions,
-                history: history,
-                updatedAt: new Date()
-            }).then(() => alert('Dados sincronizados com a nuvem com sucesso!'))
-              .catch(err => alert('Erro ao sincronizar: ' + err.message));
-        }
-
-        function loadUserDataFromCloud() {
-            if(!currentUser) return;
-            db.collection('users').doc(currentUser.uid).get().then(doc => {
-                if(doc.exists) {
-                    const data = doc.data();
-                    if(data.customFunctions) customFunctions = data.customFunctions;
-                    if(data.history) history = data.history;
-                    saveFunctionsLocally();
-                    renderFolderChips();
-                    renderQuickChips();
-                    renderFunctionsList();
-                    renderHistory();
-                }
-            });
-        }
-
-        // --- NAVIGATION ---
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            if(el) el.classList.add('active');
-
-            if(tabId === 'tab-graph') {
-                populateGraphSelect();
-                plotGraph();
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+                    self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `;
+                const swBlob = new Blob([swCode], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
             }
         }
 
-        function setKeypadMode(mode) {
-            document.getElementById('btn-toggle-basic').classList.toggle('active', mode === 'basic');
-            document.getElementById('btn-toggle-sci').classList.toggle('active', mode === 'sci');
-            document.getElementById('keypad-basic').style.display = mode === 'basic' ? 'grid' : 'none';
-            document.getElementById('keypad-sci').style.display = mode === 'sci' ? 'grid' : 'none';
+        function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    showToast('Instalando aplicativo na tela inicial...', 'success');
+                }
+                deferredPrompt = null;
+                document.getElementById('pwa-install-btn').classList.add('hidden');
+            });
         }
 
-        function toggleAngleMode() {
-            angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
-            document.getElementById('angle-mode-btn').innerText = angleMode;
-            updateLivePreview();
+        function loadData() {
+            try {
+                const storedClients = localStorage.getItem(STORAGE_KEYS.CLIENTS);
+                const storedBikes = localStorage.getItem(STORAGE_KEYS.BIKES);
+                const storedActive = localStorage.getItem(STORAGE_KEYS.ACTIVE_RENTALS);
+                const storedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
+                const storedRate = localStorage.getItem(STORAGE_KEYS.HOURLY_RATE);
+
+                if (storedClients) {
+                    clients = JSON.parse(storedClients);
+                    // Ensure archived field exists
+                    clients.forEach(c => {
+                        if (c.archived === undefined) c.archived = false;
+                    });
+                } else {
+                    clients = [
+                        { id: 'c_1', name: 'João Silva', phone: '(11) 98765-4321', photo: '', balance: 0, archived: false },
+                        { id: 'c_2', name: 'Maria Oliveira', phone: '(11) 91234-5678', photo: '', balance: 0, archived: false }
+                    ];
+                }
+
+                if (storedBikes) {
+                    bikes = JSON.parse(storedBikes);
+                } else {
+                    bikes = [
+                        { id: 'b_1', model: 'Honda CG 160 Titan', plate: 'ABC-1234', status: 'AVAILABLE' },
+                        { id: 'b_2', model: 'Yamaha Factor 150', plate: 'XYZ-5678', status: 'AVAILABLE' },
+                        { id: 'b_3', model: 'Honda Biz 125', plate: 'JKL-9012', status: 'AVAILABLE' }
+                    ];
+                }
+
+                if (storedActive) activeRentals = JSON.parse(storedActive);
+                if (storedHistory) history = JSON.parse(storedHistory);
+                if (storedRate) hourlyRate = parseFloat(storedRate) || 10;
+
+                saveAllData();
+            } catch (err) {
+                console.error('Erro ao carregar dados:', err);
+            }
         }
 
-        // --- CALCULATOR LOGIC WITH LIVE PREVIEW & ERROR REPORTING ---
-        const exprEl = document.getElementById('calc-expression');
-        const resEl = document.getElementById('calc-result');
-
-        function insertOp(op) {
-            resEl.classList.remove('error-text');
-            exprEl.innerText += op;
-            updateLivePreview();
+        function saveAllData() {
+            localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+            localStorage.setItem(STORAGE_KEYS.BIKES, JSON.stringify(bikes));
+            localStorage.setItem(STORAGE_KEYS.ACTIVE_RENTALS, JSON.stringify(activeRentals));
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+            localStorage.setItem(STORAGE_KEYS.HOURLY_RATE, hourlyRate.toString());
         }
 
-        function clearDisplay() {
-            exprEl.innerText = '';
-            resEl.innerText = '0';
-            resEl.classList.add('preview');
-            resEl.classList.remove('error-text');
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800';
+            toast.className = `fixed bottom-5 right-5 ${bgColor} text-white px-4 py-3 rounded-xl shadow-xl z-50 text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2.5`;
+            
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        function deleteChar() {
-            resEl.classList.remove('error-text');
-            exprEl.innerText = exprEl.innerText.slice(0, -1);
-            updateLivePreview();
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('hidden');
         }
 
-        function updateLivePreview() {
-            const expr = exprEl.innerText;
-            if(!expr) {
-                resEl.innerText = '0';
-                resEl.classList.add('preview');
+        function askConfirmation(title, message, onConfirm) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-msg').innerText = message;
+            pendingConfirmCallback = onConfirm;
+            
+            const btn = document.getElementById('confirm-modal-action-btn');
+            btn.onclick = () => {
+                closeModal('modal-confirm');
+                if (pendingConfirmCallback) pendingConfirmCallback();
+            };
+            
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function startClock() {
+            const update = () => {
+                const now = new Date();
+                document.getElementById('header-clock').innerText = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            };
+            update();
+            setInterval(update, 10000);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            const content = document.getElementById(`content-${tabName}`);
+            const tab = document.getElementById(`tab-${tabName}`);
+
+            if (content) content.classList.remove('hidden');
+            if (tab) tab.classList.add('active');
+
+            if (tabName === 'history') {
+                populateBikeFilterOptions();
+                applyHistoryFilters();
+            } else if (tabName === 'clients') {
+                closeClientDetail();
+                renderClientsList();
+            } else if (tabName === 'active-rentals') {
+                renderActiveRentals();
+            } else if (tabName === 'settings') {
+                renderSettings();
+            }
+        }
+
+        function renderActiveRentals() {
+            const tbody = document.getElementById('active-rentals-table-body');
+            const emptyState = document.getElementById('active-empty-state');
+            const badge = document.getElementById('badge-active-count');
+
+            if (!tbody || !emptyState || !badge) return;
+
+            badge.innerText = activeRentals.length;
+            tbody.innerHTML = '';
+
+            if (activeRentals.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            activeRentals.forEach(rental => {
+                const bike = bikes.find(b => b.id === rental.bikeId) || { model: 'Moto Removida', plate: '---' };
+                const client = clients.find(c => c.id === rental.clientId) || { name: 'Cliente Removido' };
+
+                const formattedDate = rental.dateStart ? rental.dateStart.split('-').reverse().join('/') : '--';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-slate-800">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-motorcycle text-blue-600"></i>
+                            <div>
+                                <div class="font-bold">${bike.model}</div>
+                                <div class="text-xs text-slate-400 font-mono">${bike.plate}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 font-medium text-slate-700">${client.name}</td>
+                    <td class="p-4 font-mono text-xs text-slate-600">${formattedDate} às ${rental.timeStart}</td>
+                    <td class="p-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Em Uso
+                        </span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="openEditRentalModal('${rental.id}')" title="Editar Locação" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="openReturnBikeModal('${rental.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> Receber Moto
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openNewRentalModal() {
+            const availableBikes = bikes.filter(b => b.status === 'AVAILABLE');
+            if (availableBikes.length === 0) {
+                showToast('Não há motos disponíveis no pátio para locação.', 'error');
                 return;
             }
 
-            try {
-                let scope = {};
-                customFunctions.forEach(f => {
-                    scope[f.name] = math.parse(f.body).compile();
-                });
+            // Standard available clients (not archived)
+            const activeClients = clients.filter(c => !c.archived);
 
-                let compiled = math.evaluate(expr, scope);
-                if(compiled !== undefined && typeof compiled !== 'function') {
-                    let resultFormatted = typeof compiled === 'number' ? Number(compiled.toFixed(6)).toString() : compiled;
-                    resEl.innerText = resultFormatted;
-                    resEl.classList.add('preview');
-                    resEl.classList.remove('error-text');
-                }
-            } catch (err) {}
+            if (activeClients.length === 0) {
+                showToast('Cadastre ao menos um cliente ativo antes de criar uma locação.', 'error');
+                return;
+            }
+
+            document.getElementById('modal-rental-title').innerText = 'Iniciar Nova Locação';
+            document.getElementById('rental-edit-id').value = '';
+
+            const clientSelect = document.getElementById('rental-client-select');
+            const bikeSelect = document.getElementById('rental-bike-select');
+
+            clientSelect.innerHTML = activeClients.map(c => `<option value="${c.id}">${c.name} (Saldo: R$ ${c.balance.toFixed(2)})</option>`).join('');
+            bikeSelect.innerHTML = availableBikes.map(b => `<option value="${b.id}">${b.model} - ${b.plate}</option>`).join('');
+
+            const now = new Date();
+            document.getElementById('rental-date-start').value = now.toISOString().split('T')[0];
+            document.getElementById('rental-time-start').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            document.getElementById('modal-rental-form').classList.remove('hidden');
         }
 
-        function calculateResult() {
-            const expr = exprEl.innerText;
-            if(!expr) return;
+        function openEditRentalModal(rentalId) {
+            const rental = activeRentals.find(r => r.id === rentalId);
+            if (!rental) return;
 
-            try {
-                let scope = {};
-                customFunctions.forEach(f => {
-                    scope[f.name] = math.parse(f.body).compile();
-                });
+            document.getElementById('modal-rental-title').innerText = 'Editar Locação em Andamento';
+            document.getElementById('rental-edit-id').value = rental.id;
 
-                let compiled = math.evaluate(expr, scope);
-                let resultFormatted = typeof compiled === 'number' ? Number(compiled.toFixed(6)).toString() : compiled;
-                
-                resEl.innerText = resultFormatted;
-                resEl.classList.remove('preview');
-                resEl.classList.remove('error-text');
+            const clientSelect = document.getElementById('rental-client-select');
+            clientSelect.innerHTML = clients
+                .filter(c => !c.archived || c.id === rental.clientId)
+                .map(c => `<option value="${c.id}" ${c.id === rental.clientId ? 'selected' : ''}>${c.name} (Saldo: R$ ${c.balance.toFixed(2)})</option>`).join('');
 
-                history.unshift({ expr, result: resultFormatted, time: new Date().toLocaleTimeString() });
-                if(history.length > 30) history.pop();
-                localStorage.setItem('calc_history', JSON.stringify(history));
-                renderHistory();
-                if(currentUser) syncDataWithCloud();
+            const bikeSelect = document.getElementById('rental-bike-select');
+            bikeSelect.innerHTML = bikes
+                .filter(b => b.status === 'AVAILABLE' || b.id === rental.bikeId)
+                .map(b => `<option value="${b.id}" ${b.id === rental.bikeId ? 'selected' : ''}>${b.model} - ${b.plate}</option>`).join('');
 
-            } catch (err) {
-                resEl.classList.add('error-text');
-                resEl.classList.remove('preview');
-                resEl.innerText = `Erro: ${err.message || 'Expressão Inválida'}`;
+            document.getElementById('rental-date-start').value = rental.dateStart;
+            document.getElementById('rental-time-start').value = rental.timeStart;
+
+            document.getElementById('modal-rental-form').classList.remove('hidden');
+        }
+
+        function handleSaveRental(e) {
+            e.preventDefault();
+            const editId = document.getElementById('rental-edit-id').value;
+            const clientId = document.getElementById('rental-client-select').value;
+            const bikeId = document.getElementById('rental-bike-select').value;
+            const dateStart = document.getElementById('rental-date-start').value;
+            const timeStart = document.getElementById('rental-time-start').value;
+
+            if (editId) {
+                const rental = activeRentals.find(r => r.id === editId);
+                if (rental) {
+                    if (rental.bikeId !== bikeId) {
+                        const oldBike = bikes.find(b => b.id === rental.bikeId);
+                        if (oldBike) oldBike.status = 'AVAILABLE';
+                        const newBike = bikes.find(b => b.id === bikeId);
+                        if (newBike) newBike.status = 'RENTED';
+                    }
+                    rental.clientId = clientId;
+                    rental.bikeId = bikeId;
+                    rental.dateStart = dateStart;
+                    rental.timeStart = timeStart;
+                }
+            } else {
+                const newRental = {
+                    id: 'r_' + Date.now(),
+                    bikeId,
+                    clientId,
+                    dateStart,
+                    timeStart
+                };
+                const bike = bikes.find(b => b.id === bikeId);
+                if (bike) bike.status = 'RENTED';
+                activeRentals.push(newRental);
+            }
+
+            saveAllData();
+            closeModal('modal-rental-form');
+            renderActiveRentals();
+            showToast('Locação salva com sucesso!', 'success');
+        }
+
+        function calculateDurationInMinutes(dateStart, timeStart, dateEnd, timeEnd) {
+            const startStr = `${dateStart}T${timeStart}:00`;
+            const endStr = `${dateEnd}T${timeEnd}:00`;
+
+            const startDate = new Date(startStr);
+            const endDate = new Date(endStr);
+
+            let diffMs = endDate - startDate;
+            if (isNaN(diffMs) || diffMs < 0) return 0;
+
+            return Math.floor(diffMs / (1000 * 60));
+        }
+
+        function openReturnBikeModal(rentalId) {
+            activeReturnRentalId = rentalId;
+            const rental = activeRentals.find(r => r.id === rentalId);
+            if (!rental) return;
+
+            const client = clients.find(c => c.id === rental.clientId) || { name: 'Cliente' };
+            const bike = bikes.find(b => b.id === rental.bikeId) || { model: 'Moto', plate: '' };
+
+            const formattedStartDate = rental.dateStart ? rental.dateStart.split('-').reverse().join('/') : '--';
+
+            document.getElementById('return-client-name').innerText = client.name;
+            document.getElementById('return-bike-name').innerText = `${bike.model} (${bike.plate})`;
+            document.getElementById('return-datetime-start').innerText = `${formattedStartDate} às ${rental.timeStart}`;
+
+            const now = new Date();
+            document.getElementById('return-date-end').value = now.toISOString().split('T')[0];
+            document.getElementById('return-time-end').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            togglePaymentFields('DINHEIRO', 'return');
+            calculateRentalCost();
+
+            document.getElementById('modal-return-bike').classList.remove('hidden');
+        }
+
+        function calculateRentalCost() {
+            const rental = activeRentals.find(r => r.id === activeReturnRentalId);
+            if (!rental) return;
+
+            const dateEnd = document.getElementById('return-date-end').value;
+            const timeEnd = document.getElementById('return-time-end').value;
+
+            if (!dateEnd || !timeEnd) return;
+
+            const minutes = calculateDurationInMinutes(rental.dateStart, rental.timeStart, dateEnd, timeEnd);
+            const exactHours = minutes / 60;
+            const rawCost = exactHours * hourlyRate;
+            const finalRoundedCost = Math.ceil(rawCost);
+
+            const client = clients.find(c => c.id === rental.clientId);
+            const prevBalance = client ? client.balance : 0;
+            const totalDue = finalRoundedCost - prevBalance;
+
+            const displayHours = Math.floor(minutes / 60);
+            const displayMins = minutes % 60;
+            document.getElementById('return-calc-hours').innerText = `${displayHours}h ${displayMins}m (${minutes} min total)`;
+            document.getElementById('return-calc-current-price').innerText = `R$ ${finalRoundedCost.toFixed(2)}`;
+            
+            const prevBalanceSpan = document.getElementById('return-calc-prev-balance');
+            prevBalanceSpan.innerText = `R$ ${prevBalance.toFixed(2)}`;
+            prevBalanceSpan.className = `font-bold ${prevBalance < 0 ? 'text-rose-600' : prevBalance > 0 ? 'text-blue-600' : 'text-slate-600'}`;
+
+            document.getElementById('return-calc-total-due').innerText = `R$ ${Math.max(0, totalDue).toFixed(2)}`;
+            document.getElementById('return-amount-paid-single').value = Math.max(0, totalDue).toFixed(2);
+        }
+
+        function togglePaymentFields(method, prefix) {
+            const single = document.getElementById(`${prefix}-payment-single-field`);
+            const double = document.getElementById(`${prefix}-payment-double-fields`);
+
+            if (method === 'PIX_DINHEIRO') {
+                single.classList.add('hidden');
+                double.classList.remove('hidden');
+            } else {
+                single.classList.remove('hidden');
+                double.classList.add('hidden');
             }
         }
 
-        // --- PARAMETER SEPARATE INPUT SYSTEM WITH MEMORY ---
-        function openParamModal(funcId) {
-            const func = customFunctions.find(f => f.id === funcId);
-            if(!func) return;
+        function handleFinishRental(e) {
+            e.preventDefault();
+            const rental = activeRentals.find(r => r.id === activeReturnRentalId);
+            if (!rental) return;
 
-            currentExecFunc = func;
-            document.getElementById('param-modal-title').innerText = `${func.name}(${func.params.join(', ')})`;
+            const dateEnd = document.getElementById('return-date-end').value;
+            const timeEnd = document.getElementById('return-time-end').value;
+            const method = document.getElementById('return-payment-method').value;
+
+            let totalPaid = 0;
+            if (method === 'PIX_DINHEIRO') {
+                const pix = parseFloat(document.getElementById('return-amount-paid-pix').value) || 0;
+                const cash = parseFloat(document.getElementById('return-amount-paid-cash').value) || 0;
+                totalPaid = pix + cash;
+            } else {
+                totalPaid = parseFloat(document.getElementById('return-amount-paid-single').value) || 0;
+            }
+
+            const minutes = calculateDurationInMinutes(rental.dateStart, rental.timeStart, dateEnd, timeEnd);
+            const exactHours = minutes / 60;
+            const finalRoundedCost = Math.ceil(exactHours * hourlyRate);
+
+            const client = clients.find(c => c.id === rental.clientId);
+            const bike = bikes.find(b => b.id === rental.bikeId);
+
+            const balanceBefore = client ? client.balance : 0;
+            const balanceAfter = balanceBefore + totalPaid - finalRoundedCost;
+
+            if (client) client.balance = balanceAfter;
+            if (bike) bike.status = 'AVAILABLE';
+
+            const historyItem = {
+                id: 'h_' + Date.now(),
+                dateStart: rental.dateStart,
+                timeStart: rental.timeStart,
+                dateEnd: dateEnd,
+                timeEnd: timeEnd,
+                bikeId: rental.bikeId,
+                bikeName: bike ? `${bike.model} (${bike.plate})` : 'Moto Desconhecida',
+                clientId: rental.clientId,
+                clientName: client ? client.name : 'Cliente Desconhecido',
+                durationMinutes: minutes,
+                amountCharged: finalRoundedCost,
+                amountPaid: totalPaid,
+                paymentMethod: method,
+                balanceBefore: balanceBefore,
+                balanceAfter: balanceAfter,
+                isDirectPayment: false
+            };
+
+            history.unshift(historyItem);
+            activeRentals = activeRentals.filter(r => r.id !== activeReturnRentalId);
+
+            saveAllData();
+            closeModal('modal-return-bike');
+            renderActiveRentals();
+            showToast('Moto recebida e transação concluída com sucesso!', 'success');
+        }
+
+        function populateBikeFilterOptions() {
+            const select = document.getElementById('filter-history-bike');
+            if (!select) return;
+
+            const currentVal = select.value;
+            select.innerHTML = '<option value="ALL">Todas as Motos</option>';
+
+            bikes.forEach(b => {
+                select.innerHTML += `<option value="${b.id}">${b.model} - ${b.plate}</option>`;
+            });
+            select.value = currentVal || 'ALL';
+        }
+
+        function toggleCustomPeriod(val) {
+            const startEl = document.getElementById('custom-date-start');
+            const endEl = document.getElementById('custom-date-end');
+
+            if (val === 'CUSTOM') {
+                startEl.classList.remove('hidden');
+                endEl.classList.remove('hidden');
+            } else {
+                startEl.classList.add('hidden');
+                endEl.classList.add('hidden');
+            }
+        }
+
+        function applyHistoryFilters() {
+            const bikeFilter = document.getElementById('filter-history-bike').value;
+            const periodFilter = document.getElementById('filter-history-period').value;
+            const dateStart = document.getElementById('filter-date-start').value;
+            const dateEnd = document.getElementById('filter-date-end').value;
+
+            const today = new Date().toISOString().split('T')[0];
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            const currentYear = new Date().getFullYear().toString();
+
+            const filtered = history.filter(item => {
+                if (bikeFilter !== 'ALL' && item.bikeId !== bikeFilter) {
+                    return false;
+                }
+
+                const itemDate = item.dateEnd || item.dateStart;
+
+                if (periodFilter === 'TODAY' && itemDate !== today) return false;
+                if (periodFilter === 'MONTH' && !itemDate.startsWith(currentMonth)) return false;
+                if (periodFilter === 'YEAR' && !itemDate.startsWith(currentYear)) return false;
+                if (periodFilter === 'CUSTOM') {
+                    if (dateStart && itemDate < dateStart) return false;
+                    if (dateEnd && itemDate > dateEnd) return false;
+                }
+
+                return true;
+            });
+
+            renderHistoryTable(filtered);
+        }
+
+        function renderHistoryTable(dataList = history) {
+            const tbody = document.getElementById('history-table-body');
+            const emptyState = document.getElementById('history-empty-state');
+
+            if (!tbody || !emptyState) return;
+
+            tbody.innerHTML = '';
+
+            let totalRevenue = 0;
+            let totalMinutes = 0;
+
+            dataList.forEach(item => {
+                totalRevenue += item.amountPaid;
+                totalMinutes += (item.durationMinutes || 0);
+            });
+
+            const statHours = Math.floor(totalMinutes / 60);
+            const statMins = totalMinutes % 60;
+
+            document.getElementById('stat-total-revenue').innerText = `R$ ${totalRevenue.toFixed(2)}`;
+            document.getElementById('stat-total-hours').innerText = `${statHours}h ${statMins}m`;
+            document.getElementById('stat-total-rentals').innerText = dataList.length;
+
+            if (dataList.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            dataList.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+
+                const formattedStart = item.dateStart ? `${item.dateStart.split('-').reverse().join('/')} ${item.timeStart}` : '--';
+                const formattedEnd = item.isDirectPayment ? 'Lançamento Direto' : (item.dateEnd ? `${item.dateEnd.split('-').reverse().join('/')} ${item.timeEnd}` : '--');
+
+                const methodMap = {
+                    'DINHEIRO': 'Dinheiro',
+                    'PIX': 'PIX',
+                    'PIX_DINHEIRO': 'PIX + Dinheiro'
+                };
+
+                const h = Math.floor((item.durationMinutes || 0) / 60);
+                const m = (item.durationMinutes || 0) % 60;
+                const durationText = item.isDirectPayment ? '-' : `${h}h ${m}m`;
+
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-xs text-slate-500">${formattedStart}</td>
+                    <td class="p-4 font-mono text-xs text-slate-500">${formattedEnd}</td>
+                    <td class="p-4 font-medium text-slate-800">${item.bikeName}</td>
+                    <td class="p-4 text-slate-700">${item.clientName}</td>
+                    <td class="p-4 font-mono text-xs text-slate-600">${durationText}</td>
+                    <td class="p-4 text-slate-800 font-semibold">R$ ${item.amountCharged.toFixed(2)}</td>
+                    <td class="p-4 text-emerald-600 font-semibold">R$ ${item.amountPaid.toFixed(2)}</td>
+                    <td class="p-4"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-medium">${methodMap[item.paymentMethod] || item.paymentMethod}</span></td>
+                    <td class="p-4 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                            <button onclick="openEditHistoryModal('${item.id}')" title="Editar Histórico" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteHistoryItem('${item.id}')" title="Excluir do Histórico" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openEditHistoryModal(historyId) {
+            const item = history.find(h => h.id === historyId);
+            if (!item) return;
+
+            document.getElementById('history-edit-id').value = item.id;
+            document.getElementById('history-edit-date-start').value = item.dateStart || '';
+            document.getElementById('history-edit-time-start').value = item.timeStart || '';
+            document.getElementById('history-edit-date-end').value = item.dateEnd || '';
+            document.getElementById('history-edit-time-end').value = item.timeEnd || '';
+
+            const bikeSelect = document.getElementById('history-edit-bike-select');
+            bikeSelect.innerHTML = `<option value="">Lançamento Direto / Sem Moto</option>` + 
+                bikes.map(b => `<option value="${b.id}" ${b.id === item.bikeId ? 'selected' : ''}>${b.model} - ${b.plate}</option>`).join('');
+
+            document.getElementById('history-edit-amount-charged').value = item.amountCharged;
+            document.getElementById('history-edit-amount-paid').value = item.amountPaid;
+            document.getElementById('history-edit-payment-method').value = item.paymentMethod || 'DINHEIRO';
+
+            document.getElementById('modal-edit-history').classList.remove('hidden');
+        }
+
+        function handleSaveHistoryEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('history-edit-id').value;
+            const item = history.find(h => h.id === id);
+            if (!item) return;
+
+            item.dateStart = document.getElementById('history-edit-date-start').value;
+            item.timeStart = document.getElementById('history-edit-time-start').value;
+            item.dateEnd = document.getElementById('history-edit-date-end').value;
+            item.timeEnd = document.getElementById('history-edit-time-end').value;
+
+            const selectedBikeId = document.getElementById('history-edit-bike-select').value;
+            if (selectedBikeId) {
+                const b = bikes.find(bike => bike.id === selectedBikeId);
+                item.bikeId = selectedBikeId;
+                item.bikeName = b ? `${b.model} (${b.plate})` : 'Moto';
+                item.isDirectPayment = false;
+            } else {
+                item.bikeId = '';
+                item.bikeName = 'Lançamento Direto / Ajuste';
+                item.isDirectPayment = true;
+            }
+
+            if (item.dateStart && item.timeStart && item.dateEnd && item.timeEnd && !item.isDirectPayment) {
+                item.durationMinutes = calculateDurationInMinutes(item.dateStart, item.timeStart, item.dateEnd, item.timeEnd);
+            } else {
+                item.durationMinutes = 0;
+            }
+
+            item.amountCharged = parseFloat(document.getElementById('history-edit-amount-charged').value) || 0;
+            item.amountPaid = parseFloat(document.getElementById('history-edit-amount-paid').value) || 0;
+            item.paymentMethod = document.getElementById('history-edit-payment-method').value;
+
+            recalculateClientBalance(item.clientId);
+
+            closeModal('modal-edit-history');
+            applyHistoryFilters();
+            if (currentDetailClientId === item.clientId) {
+                openClientDetail(item.clientId);
+            }
+            renderClientsList();
+            showToast('Histórico atualizado!', 'success');
+        }
+
+        function deleteHistoryItem(historyId) {
+            const item = history.find(h => h.id === historyId);
+            if (!item) return;
+
+            askConfirmation(
+                'Excluir Histórico',
+                `Deseja excluir este registro de ${item.clientName}? O saldo do cliente será recalculado automaticamente.`,
+                () => {
+                    const clientId = item.clientId;
+                    history = history.filter(h => h.id !== historyId);
+                    
+                    recalculateClientBalance(clientId);
+
+                    applyHistoryFilters();
+                    if (currentDetailClientId === clientId) {
+                        openClientDetail(clientId);
+                    }
+                    renderClientsList();
+                    showToast('Registro excluído com sucesso!', 'success');
+                }
+            );
+        }
+
+        function recalculateClientBalance(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            const clientHistoryAsc = history
+                .filter(h => h.clientId === clientId)
+                .sort((a, b) => {
+                    const timeA = `${a.dateStart || ''}T${a.timeStart || ''}`;
+                    const timeB = `${b.dateStart || ''}T${b.timeStart || ''}`;
+                    return timeA.localeCompare(timeB);
+                });
+
+            let runningBalance = 0;
+            clientHistoryAsc.forEach(item => {
+                item.balanceBefore = runningBalance;
+                runningBalance = runningBalance + item.amountPaid - item.amountCharged;
+                item.balanceAfter = runningBalance;
+            });
+
+            client.balance = runningBalance;
+            saveAllData();
+        }
+
+        /* CLIENT MANAGEMENT (LISTING, FILTERING, ARCHIVING & REMOVAL) */
+        function setClientStatusFilter(archivedStatus) {
+            showArchivedClients = archivedStatus;
             
-            const container = document.getElementById('param-inputs-container');
+            const btnActive = document.getElementById('btn-show-active-clients');
+            const btnArchived = document.getElementById('btn-show-archived-clients');
+
+            if (archivedStatus) {
+                btnArchived.className = 'flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm transition';
+                btnActive.className = 'flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-md text-slate-500 hover:text-slate-800 transition';
+            } else {
+                btnActive.className = 'flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm transition';
+                btnArchived.className = 'flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-md text-slate-500 hover:text-slate-800 transition';
+            }
+
+            renderClientsList();
+        }
+
+        function renderClientsList() {
+            const container = document.getElementById('clients-container');
+            const search = (document.getElementById('client-search-input')?.value || '').toLowerCase();
+
+            if (!container) return;
             container.innerHTML = '';
 
-            const lastInputs = func.lastInputs || {};
+            const sorted = [...clients].sort((a, b) => a.name.localeCompare(b.name));
+            const filtered = sorted.filter(c => 
+                c.archived === showArchivedClients && 
+                c.name.toLowerCase().includes(search)
+            );
 
-            func.params.forEach((param, index) => {
-                const labelText = (func.labels && func.labels[index]) ? func.labels[index] : param;
-                const savedVal = lastInputs[param] !== undefined ? lastInputs[param] : '';
+            if (filtered.length === 0) {
+                const emptyMsg = showArchivedClients ? 'Nenhum cliente arquivado.' : 'Nenhum cliente ativo encontrado.';
+                container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400 text-sm">${emptyMsg}</div>`;
+                return;
+            }
 
-                const div = document.createElement('div');
-                div.className = 'param-field';
-                div.innerHTML = `
-                    <div class="param-label-box">
-                        <span class="param-label">${param}</span>
-                        <span class="param-custom-name">${labelText}</span>
+            filtered.forEach(client => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-blue-300 transition flex items-center justify-between gap-3';
+
+                const avatarUrl = client.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=0D8ABC&color=fff`;
+                const balanceColor = client.balance >= 0 ? 'text-blue-700 bg-blue-50' : 'text-rose-700 bg-rose-50';
+
+                const archiveBtnTitle = client.archived ? 'Desarquivar Cliente' : 'Arquivar Cliente';
+                const archiveBtnIcon = client.archived ? 'fa-box-open' : 'fa-box-archive';
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="openClientDetail('${client.id}')">
+                        <img src="${avatarUrl}" alt="${client.name}" class="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}'">
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <h3 class="font-bold text-slate-800 text-sm sm:text-base">${client.name}</h3>
+                                ${client.archived ? '<span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-semibold">Arquivado</span>' : ''}
+                            </div>
+                            <p class="text-xs text-slate-400"><i class="fa-solid fa-phone text-slate-300 mr-1"></i>${client.phone || 'Sem telefone'}</p>
+                        </div>
                     </div>
-                    <input type="number" class="input-field param-val-input" data-param="${param}" value="${savedVal}" oninput="updateLiveParamCalc()" placeholder="Digite o valor de ${labelText}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${balanceColor}">
+                            R$ ${client.balance.toFixed(2)}
+                        </span>
+                        <button onclick="openEditClientModal('${client.id}')" title="Editar Cliente" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="toggleArchiveClient('${client.id}')" title="${archiveBtnTitle}" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition">
+                            <i class="fa-solid ${archiveBtnIcon}"></i>
+                        </button>
+                        <button onclick="deleteClient('${client.id}')" title="Remover Cliente" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 `;
-                container.appendChild(div);
+                container.appendChild(card);
             });
-
-            updateLiveParamCalc();
-            openModal('modal-params');
         }
 
-        function clearParamInputs() {
-            document.querySelectorAll('.param-val-input').forEach(input => input.value = '');
-            updateLiveParamCalc();
+        function toggleArchiveClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            // Prevent archiving if active rental exists
+            const hasActiveRental = activeRentals.some(r => r.clientId === clientId);
+            if (!client.archived && hasActiveRental) {
+                showToast('Não é possível arquivar um cliente com locação ativa em andamento.', 'error');
+                return;
+            }
+
+            client.archived = !client.archived;
+            saveAllData();
+
+            const actionName = client.archived ? 'arquivado' : 'desarquivado';
+            showToast(`Cliente ${client.name} ${actionName} com sucesso!`, 'success');
+
+            if (currentDetailClientId === clientId) {
+                openClientDetail(clientId);
+            }
+            renderClientsList();
         }
 
-        function updateLiveParamCalc() {
-            if(!currentExecFunc) return;
-            const inputs = document.querySelectorAll('.param-val-input');
-            let scope = {};
-            let allFilled = true;
+        function deleteClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
 
-            inputs.forEach(input => {
-                const val = parseFloat(input.value);
-                if(isNaN(val)) {
-                    allFilled = false;
-                } else {
-                    scope[input.dataset.param] = val;
+            // Check if client has active rentals
+            const hasActiveRental = activeRentals.some(r => r.clientId === clientId);
+            if (hasActiveRental) {
+                showToast('Não é possível remover um cliente com moto alugada no momento.', 'error');
+                return;
+            }
+
+            askConfirmation(
+                'Remover Cliente',
+                `Tem certeza de que deseja excluir ${client.name}? Esta ação é irreversível.`,
+                () => {
+                    clients = clients.filter(c => c.id !== clientId);
+                    saveAllData();
+
+                    if (currentDetailClientId === clientId) {
+                        closeClientDetail();
+                    }
+                    renderClientsList();
+                    showToast('Cliente removido com sucesso!', 'success');
                 }
-            });
-
-            if(!allFilled) {
-                document.getElementById('param-live-result').innerText = '-';
-                return;
-            }
-
-            currentExecFunc.lastInputs = scope;
-            saveFunctions();
-
-            try {
-                const res = math.evaluate(currentExecFunc.body, scope);
-                document.getElementById('param-live-result').innerText = Number(res.toFixed(6)).toString();
-            } catch(e) {
-                document.getElementById('param-live-result').innerText = `Erro: ${e.message}`;
-            }
+            );
         }
 
-        function sendParamResultToDisplay() {
-            const res = document.getElementById('param-live-result').innerText;
-            if(res !== '-' && !res.startsWith('Erro')) {
-                exprEl.innerText = res;
-                resEl.innerText = res;
-                resEl.classList.remove('preview');
-                resEl.classList.remove('error-text');
-                closeModal('modal-params');
-            }
+        function openNewClientModal() {
+            document.getElementById('modal-client-title').innerText = 'Cadastrar Novo Cliente';
+            document.getElementById('client-edit-id').value = '';
+            document.getElementById('form-client').reset();
+            document.getElementById('modal-client-form').classList.remove('hidden');
         }
 
-        // --- FUNCTION CREATOR PARAMETER INJECTION CHIPS ---
-        function updateParamInjectChips() {
-            const paramsStr = document.getElementById('func-input-params').value.trim();
-            const container = document.getElementById('param-chips-container');
-            
-            if(!paramsStr) {
-                container.innerHTML = '';
-                return;
-            }
+        function openEditClientModal(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
 
-            const params = paramsStr.split(',').map(p => p.trim()).filter(p => p !== '');
-            container.innerHTML = params.map(p => `
-                <button type="button" class="param-chip-btn" onclick="injectParamToBody('${p}')">+ Inserir '${p}'</button>
-            `).join('');
+            document.getElementById('modal-client-title').innerText = 'Editar Cliente';
+            document.getElementById('client-edit-id').value = client.id;
+            document.getElementById('client-name-input').value = client.name;
+            document.getElementById('client-phone-input').value = client.phone || '';
+            document.getElementById('client-photo-input').value = client.photo || '';
+
+            document.getElementById('modal-client-form').classList.remove('hidden');
         }
 
-        function injectParamToBody(param) {
-            const bodyInput = document.getElementById('func-input-body');
-            bodyInput.value += param;
-            bodyInput.focus();
-        }
+        function handleSaveClient(e) {
+            e.preventDefault();
+            const editId = document.getElementById('client-edit-id').value;
+            const name = document.getElementById('client-name-input').value.trim();
+            const phone = document.getElementById('client-phone-input').value.trim();
+            const photo = document.getElementById('client-photo-input').value.trim();
 
-        // --- FOLDER SELECTOR LOGIC ---
-        function populateFolderSelect(selectedFolder = 'Geral') {
-            const select = document.getElementById('func-select-folder');
-            const folders = [...new Set(customFunctions.map(f => f.folder || 'Geral'))];
-            
-            if(!folders.includes('Geral')) folders.unshift('Geral');
+            if (!name) return;
 
-            select.innerHTML = folders.map(f => `<option value="${f}">${f}</option>`).join('') +
-                               `<option value="__NEW__">+ Criar Nova Pasta...</option>`;
-            
-            if(folders.includes(selectedFolder)) {
-                select.value = selectedFolder;
-                document.getElementById('func-input-new-folder').style.display = 'none';
-            } else {
-                select.value = '__NEW__';
-                document.getElementById('func-input-new-folder').style.display = 'block';
-                document.getElementById('func-input-new-folder').value = selectedFolder;
-            }
-        }
-
-        function toggleFolderNewInput(selectEl) {
-            const newFolderInput = document.getElementById('func-input-new-folder');
-            if(selectEl.value === '__NEW__') {
-                newFolderInput.style.display = 'block';
-                newFolderInput.focus();
-            } else {
-                newFolderInput.style.display = 'none';
-            }
-        }
-
-        // --- FUNCTION MANAGER ---
-        function renderFolderChips() {
-            const folders = ['Todas', ...new Set(customFunctions.map(f => f.folder || 'Geral'))];
-            const container = document.getElementById('folder-chips-bar');
-            container.innerHTML = folders.map(f => `
-                <button class="folder-chip ${f === activeFolder ? 'active' : ''}" onclick="filterFolder('${f}')">${f}</button>
-            `).join('');
-        }
-
-        function filterFolder(folder) {
-            activeFolder = folder;
-            renderFolderChips();
-            renderFunctionsList();
-        }
-
-        function renderQuickChips() {
-            const container = document.getElementById('quick-chips-container');
-            const favs = customFunctions.filter(f => f.fav);
-            
-            if(favs.length === 0) {
-                container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted)">Nenhuma função favoritada</span>`;
-                return;
-            }
-
-            container.innerHTML = favs.map(f => `
-                <div class="func-chip" onclick="openParamModal('${f.id}')">
-                    <i class="fa-solid fa-star"></i>
-                    <span>${f.name}</span>
-                </div>
-            `).join('');
-        }
-
-        function renderFunctionsList() {
-            const container = document.getElementById('functions-list');
-            const filtered = activeFolder === 'Todas' ? customFunctions : customFunctions.filter(f => (f.folder || 'Geral') === activeFolder);
-
-            container.innerHTML = filtered.map(f => `
-                <div class="func-card">
-                    <div class="func-card-header">
-                        <span class="func-name"><i class="fa-solid fa-square-root-variable"></i> ${f.name}(${f.params.join(', ')})</span>
-                        <span style="font-size:0.7rem; color:var(--text-muted);">${f.folder || 'Geral'}</span>
-                    </div>
-                    <div class="func-body">= ${f.body}</div>
-                    <div class="func-actions">
-                        <button class="btn-sm fav ${f.fav ? 'active' : ''}" onclick="toggleFav('${f.id}')"><i class="fa-solid fa-star"></i></button>
-                        <button class="btn-sm" onclick="editFunction('${f.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-                        <button class="btn-sm" onclick="openParamModal('${f.id}')"><i class="fa-solid fa-play"></i> Usar</button>
-                        <button class="btn-sm" onclick="deleteFunction('${f.id}')" style="color:#f43f5e"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function toggleFav(id) {
-            const func = customFunctions.find(f => f.id === id);
-            if(func) {
-                func.fav = !func.fav;
-                saveFunctions();
-            }
-        }
-
-        function openNewFuncModal() {
-            document.getElementById('modal-func-title').innerText = "Nova Função";
-            document.getElementById('func-editing-id').value = "";
-            document.getElementById('func-input-name').value = "";
-            document.getElementById('func-input-params').value = "";
-            document.getElementById('func-input-labels').value = "";
-            document.getElementById('func-input-body').value = "";
-            populateFolderSelect('Geral');
-            updateParamInjectChips();
-            openModal('modal-func');
-        }
-
-        function editFunction(id) {
-            const func = customFunctions.find(f => f.id === id);
-            if(!func) return;
-
-            document.getElementById('modal-func-title').innerText = "Editar Função";
-            document.getElementById('func-editing-id').value = func.id;
-            document.getElementById('func-input-name').value = func.name;
-            document.getElementById('func-input-params').value = func.params.join(', ');
-            document.getElementById('func-input-labels').value = (func.labels || []).join(', ');
-            document.getElementById('func-input-body').value = func.body;
-
-            populateFolderSelect(func.folder || 'Geral');
-            updateParamInjectChips();
-            openModal('modal-func');
-        }
-
-        function saveCustomFunction() {
-            const editingId = document.getElementById('func-editing-id').value;
-            const name = document.getElementById('func-input-name').value.trim();
-            const paramsStr = document.getElementById('func-input-params').value.trim();
-            const labelsStr = document.getElementById('func-input-labels').value.trim();
-            
-            let folderSelect = document.getElementById('func-select-folder').value;
-            let folder = folderSelect === '__NEW__' 
-                ? document.getElementById('func-input-new-folder').value.trim() || 'Geral' 
-                : folderSelect;
-
-            const body = document.getElementById('func-input-body').value.trim();
-
-            if(!name || !body) return alert('Preencha o nome e a expressão!');
-
-            const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
-            const labels = labelsStr ? labelsStr.split(',').map(l => l.trim()) : params;
-
-            if(editingId) {
-                const index = customFunctions.findIndex(f => f.id === editingId);
-                if(index !== -1) {
-                    customFunctions[index].name = name;
-                    customFunctions[index].params = params;
-                    customFunctions[index].labels = labels;
-                    customFunctions[index].folder = folder;
-                    customFunctions[index].body = body;
+            if (editId) {
+                const client = clients.find(c => c.id === editId);
+                if (client) {
+                    client.name = name;
+                    client.phone = phone;
+                    client.photo = photo;
                 }
             } else {
-                customFunctions.push({
-                    id: Date.now().toString(),
+                clients.push({
+                    id: 'c_' + Date.now(),
                     name,
-                    params,
-                    labels,
-                    folder,
-                    body,
-                    fav: true,
-                    lastInputs: {}
+                    phone,
+                    photo,
+                    balance: 0,
+                    archived: false
                 });
             }
 
-            saveFunctions();
-            closeModal('modal-func');
+            saveAllData();
+            closeModal('modal-client-form');
+
+            if (currentDetailClientId === editId) {
+                openClientDetail(editId);
+            }
+            renderClientsList();
+            showToast('Cliente salvo com sucesso!', 'success');
         }
 
-        function deleteFunction(id) {
-            customFunctions = customFunctions.filter(f => f.id !== id);
-            saveFunctions();
+        function openReceiveClientPaymentModal() {
+            const client = clients.find(c => c.id === currentDetailClientId);
+            if (!client) return;
+
+            document.getElementById('direct-payment-client-name').innerText = client.name;
+            const balEl = document.getElementById('direct-payment-client-balance');
+            balEl.innerText = `R$ ${client.balance.toFixed(2)}`;
+            balEl.className = client.balance >= 0 ? 'font-bold text-blue-600' : 'font-bold text-rose-600';
+
+            document.getElementById('form-direct-payment').reset();
+            document.getElementById('direct-transaction-type').value = 'CREDIT';
+            toggleTransactionTypeUI('CREDIT');
+            togglePaymentFields('DINHEIRO', 'direct');
+
+            document.getElementById('modal-receive-client-payment').classList.remove('hidden');
         }
 
-        function saveFunctionsLocally() {
-            localStorage.setItem('calc_functions', JSON.stringify(customFunctions));
+        function toggleTransactionTypeUI(type) {
+            const labelAmount = document.getElementById('direct-label-amount');
+            const submitBtn = document.getElementById('direct-submit-btn');
+            const payMethodContainer = document.getElementById('direct-payment-method-container');
+
+            if (type === 'DEBIT') {
+                labelAmount.innerText = 'Valor do Débito / Cobrança (R$)';
+                submitBtn.innerText = 'Confirmar Lançamento de Débito';
+                submitBtn.className = 'px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium shadow';
+                payMethodContainer.classList.add('hidden');
+                document.getElementById('direct-payment-single-field').classList.remove('hidden');
+                document.getElementById('direct-payment-double-fields').classList.add('hidden');
+            } else {
+                labelAmount.innerText = 'Valor Recebido (R$)';
+                submitBtn.innerText = 'Confirmar Recebimento de Crédito';
+                submitBtn.className = 'px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow';
+                payMethodContainer.classList.remove('hidden');
+                togglePaymentFields(document.getElementById('direct-payment-method').value, 'direct');
+            }
         }
 
-        function saveFunctions() {
-            saveFunctionsLocally();
-            renderFolderChips();
-            renderQuickChips();
-            renderFunctionsList();
-            if(currentUser) syncDataWithCloud();
-        }
+        function handleDirectPayment(e) {
+            e.preventDefault();
+            const client = clients.find(c => c.id === currentDetailClientId);
+            if (!client) return;
 
-        // --- GRAPH PLOTTER ---
-        function populateGraphSelect() {
-            const select = document.getElementById('graph-func-select');
-            const singleParamFuncs = customFunctions.filter(f => f.params.length === 1);
-            
-            select.innerHTML = singleParamFuncs.map(f => `
-                <option value="${f.id}">${f.name}(${f.params[0]}) = ${f.body}</option>
-            `).join('');
-        }
+            const type = document.getElementById('direct-transaction-type').value;
+            const description = document.getElementById('direct-description').value.trim() || (type === 'CREDIT' ? 'Pagamento Avulso / Crédito' : 'Lançamento de Débito');
+            const method = document.getElementById('direct-payment-method').value;
 
-        function initChart() {
-            const ctx = document.getElementById('functionChart').getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: [], datasets: [{ label: 'f(x)', data: [], borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
-            });
-        }
+            let amountCharged = 0;
+            let amountPaid = 0;
 
-        function plotGraph() {
-            const funcId = document.getElementById('graph-func-select').value;
-            const xmin = parseFloat(document.getElementById('graph-xmin').value) || -10;
-            const xmax = parseFloat(document.getElementById('graph-xmax').value) || 10;
-            
-            const func = customFunctions.find(f => f.id === funcId);
-            if(!func || func.params.length !== 1) return;
-
-            const xVals = [];
-            const yVals = [];
-            const step = (xmax - xmin) / 50;
-
-            const compiled = math.parse(func.body).compile();
-
-            for(let x = xmin; x <= xmax; x += step) {
-                xVals.push(x.toFixed(1));
-                try {
-                    let scope = {};
-                    scope[func.params[0]] = x;
-                    yVals.push(compiled.evaluate(scope));
-                } catch(e) {
-                    yVals.push(null);
+            if (type === 'DEBIT') {
+                amountCharged = parseFloat(document.getElementById('direct-amount-single').value) || 0;
+            } else {
+                if (method === 'PIX_DINHEIRO') {
+                    const pix = parseFloat(document.getElementById('direct-amount-pix').value) || 0;
+                    const cash = parseFloat(document.getElementById('direct-amount-cash').value) || 0;
+                    amountPaid = pix + cash;
+                } else {
+                    amountPaid = parseFloat(document.getElementById('direct-amount-single').value) || 0;
                 }
             }
 
-            chartInstance.data.labels = xVals;
-            chartInstance.data.datasets[0].data = yVals;
-            chartInstance.data.datasets[0].label = `${func.name}(${func.params[0]})`;
-            chartInstance.update();
+            if (amountCharged <= 0 && amountPaid <= 0) {
+                showToast('Informe um valor válido superior a R$ 0,00.', 'error');
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const historyItem = {
+                id: 'h_' + Date.now(),
+                dateStart: dateStr,
+                timeStart: timeStr,
+                dateEnd: dateStr,
+                timeEnd: timeStr,
+                bikeId: '',
+                bikeName: description,
+                clientId: client.id,
+                clientName: client.name,
+                durationMinutes: 0,
+                amountCharged: amountCharged,
+                amountPaid: amountPaid,
+                paymentMethod: type === 'DEBIT' ? 'DINHEIRO' : method,
+                balanceBefore: client.balance,
+                balanceAfter: client.balance + amountPaid - amountCharged,
+                isDirectPayment: true
+            };
+
+            history.unshift(historyItem);
+            recalculateClientBalance(client.id);
+
+            closeModal('modal-receive-client-payment');
+            openClientDetail(client.id);
+            renderClientsList();
+            showToast('Lançamento registrado com sucesso!', 'success');
         }
 
-        // --- HISTORY ---
-        function renderHistory() {
-            const container = document.getElementById('history-list');
-            container.innerHTML = history.map(h => `
-                <div class="history-item" onclick="loadHistoryItem('${h.expr}')">
-                    <div class="history-expr">${h.expr}</div>
-                    <div class="history-res">= ${h.result}</div>
-                </div>
-            `).join('');
+        function openClientDetail(clientId) {
+            currentDetailClientId = clientId;
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+
+            document.getElementById('client-list-view').classList.add('hidden');
+            document.getElementById('client-detail-view').classList.remove('hidden');
+
+            const avatarUrl = client.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=0D8ABC&color=fff`;
+            document.getElementById('detail-client-photo').src = avatarUrl;
+            document.getElementById('detail-client-name').innerText = client.name;
+            document.getElementById('detail-client-phone').innerText = client.phone || 'Sem Telefone';
+
+            const archivedBadge = document.getElementById('detail-client-archived-badge');
+            if (client.archived) {
+                archivedBadge.classList.remove('hidden');
+            } else {
+                archivedBadge.classList.add('hidden');
+            }
+
+            const archiveBtn = document.getElementById('btn-detail-toggle-archive');
+            if (client.archived) {
+                archiveBtn.innerHTML = '<i class="fa-solid fa-box-open"></i> Desarquivar';
+            } else {
+                archiveBtn.innerHTML = '<i class="fa-solid fa-box-archive"></i> Arquivar';
+            }
+            
+            const balanceEl = document.getElementById('detail-client-balance');
+            const badgeEl = document.getElementById('detail-client-balance-badge');
+            balanceEl.innerText = `R$ ${client.balance.toFixed(2)}`;
+
+            if (client.balance >= 0) {
+                badgeEl.className = 'inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700';
+            } else {
+                badgeEl.className = 'inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700';
+            }
+
+            const clientHistory = history.filter(h => h.clientId === clientId);
+            const tbody = document.getElementById('client-history-table-body');
+            const emptyEl = document.getElementById('client-history-empty');
+
+            tbody.innerHTML = '';
+
+            if (clientHistory.length === 0) {
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            clientHistory.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+
+                const formattedStart = item.dateStart ? `${item.dateStart.split('-').reverse().join('/')} ${item.timeStart}` : '--';
+                const formattedEnd = item.isDirectPayment ? 'Lançamento Direto' : (item.dateEnd ? `${item.dateEnd.split('-').reverse().join('/')} ${item.timeEnd}` : '--');
+
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-xs text-slate-500">${formattedStart}</td>
+                    <td class="p-3 font-mono text-xs text-slate-500">${formattedEnd}</td>
+                    <td class="p-3 font-medium text-slate-800">${item.bikeName}</td>
+                    <td class="p-3 text-slate-800">R$ ${item.amountCharged.toFixed(2)}</td>
+                    <td class="p-3 text-emerald-600 font-semibold">R$ ${item.amountPaid.toFixed(2)}</td>
+                    <td class="p-3 text-slate-500">R$ ${item.balanceBefore.toFixed(2)}</td>
+                    <td class="p-3 font-bold ${item.balanceAfter >= 0 ? 'text-blue-700' : 'text-rose-600'}">R$ ${item.balanceAfter.toFixed(2)}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="openEditHistoryModal('${item.id}')" title="Editar" class="p-1 text-slate-400 hover:text-blue-600 transition">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function loadHistoryItem(expr) {
-            exprEl.innerText = expr;
-            updateLivePreview();
-            switchTab('tab-calc');
+        function closeClientDetail() {
+            currentDetailClientId = null;
+            document.getElementById('client-detail-view').classList.add('hidden');
+            document.getElementById('client-list-view').classList.remove('hidden');
         }
 
-        function clearHistory() {
-            history = [];
-            localStorage.removeItem('calc_history');
-            renderHistory();
-            if(currentUser) syncDataWithCloud();
+        function renderSettings() {
+            document.getElementById('setting-hourly-rate').value = hourlyRate;
+
+            const list = document.getElementById('bikes-settings-list');
+            if (!list) return;
+
+            list.innerHTML = '';
+            bikes.forEach(bike => {
+                const isRented = bike.status === 'RENTED';
+                const statusBadge = isRented 
+                    ? `<span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">Em Uso</span>`
+                    : `<span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">Disponível</span>`;
+
+                const div = document.createElement('div');
+                div.className = 'py-3 flex items-center justify-between gap-3';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-slate-100 rounded-lg text-slate-600">
+                            <i class="fa-solid fa-motorcycle"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-800 text-sm">${bike.model}</p>
+                            <p class="text-xs text-slate-400 font-mono">${bike.plate}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        ${statusBadge}
+                        <button onclick="openEditBikeModal('${bike.id}')" class="p-1.5 text-slate-400 hover:text-blue-600 rounded transition">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteBike('${bike.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
         }
 
-        // --- MODAL HELPERS ---
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function openTutorial() { openModal('modal-tutorial'); }
-        function openHelp() { openModal('modal-help'); }
-
-        function loadPresetFuncs() {
-            customFunctions.push(
-                { id: Date.now().toString(), name: 'areaTri', params: ['b', 'h'], labels: ['Base', 'Altura'], body: '(b * h) / 2', folder: 'Geometria', fav: false, lastInputs: {} }
-            );
-            saveFunctions();
-            closeModal('modal-help');
+        function saveHourlyRate() {
+            const val = parseFloat(document.getElementById('setting-hourly-rate').value);
+            if (!val || val <= 0) {
+                showToast('Informe um valor de hora válido.', 'error');
+                return;
+            }
+            hourlyRate = val;
+            saveAllData();
+            showToast('Valor da tarifa atualizado!', 'success');
         }
+
+        function openNewBikeModal() {
+            document.getElementById('modal-bike-title').innerText = 'Cadastrar Nova Moto';
+            document.getElementById('bike-edit-id').value = '';
+            document.getElementById('form-bike').reset();
+            document.getElementById('bike-status-container').classList.add('hidden');
+            document.getElementById('modal-bike-form').classList.remove('hidden');
+        }
+
+        function openEditBikeModal(bikeId) {
+            const bike = bikes.find(b => b.id === bikeId);
+            if (!bike) return;
+
+            document.getElementById('modal-bike-title').innerText = 'Editar Moto';
+            document.getElementById('bike-edit-id').value = bike.id;
+            document.getElementById('bike-model-input').value = bike.model;
+            document.getElementById('bike-plate-input').value = bike.plate;
+            document.getElementById('bike-status-input').value = bike.status;
+            
+            document.getElementById('bike-status-container').classList.remove('hidden');
+            document.getElementById('modal-bike-form').classList.remove('hidden');
+        }
+
+        function handleSaveBike(e) {
+            e.preventDefault();
+            const editId = document.getElementById('bike-edit-id').value;
+            const model = document.getElementById('bike-model-input').value.trim();
+            const plate = document.getElementById('bike-plate-input').value.trim().toUpperCase();
+            const status = document.getElementById('bike-status-input').value;
+
+            if (!model || !plate) return;
+
+            if (editId) {
+                const bike = bikes.find(b => b.id === editId);
+                if (bike) {
+                    bike.model = model;
+                    bike.plate = plate;
+                    bike.status = status;
+                }
+            } else {
+                bikes.push({
+                    id: 'b_' + Date.now(),
+                    model,
+                    plate,
+                    status: 'AVAILABLE'
+                });
+            }
+
+            saveAllData();
+            closeModal('modal-bike-form');
+            renderSettings();
+            showToast('Moto salva com sucesso!', 'success');
+        }
+
+        function deleteBike(bikeId) {
+            const isRented = activeRentals.some(r => r.bikeId === bikeId);
+            if (isRented) {
+                showToast('Não é possível excluir uma moto que está alugada no momento.', 'error');
+                return;
+            }
+
+            askConfirmation('Excluir Moto', 'Tem certeza de que deseja remover esta moto da frota?', () => {
+                bikes = bikes.filter(b => b.id !== bikeId);
+                saveAllData();
+                renderSettings();
+                showToast('Moto removida com sucesso!', 'success');
+            });
+        }
+
+        /* INITIALIZATION */
+        window.addEventListener('DOMContentLoaded', () => {
+            setupPWA();
+            loadData();
+            startClock();
+            renderActiveRentals();
+        });
     </script>
 </body>
 </html>
